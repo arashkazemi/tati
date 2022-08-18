@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+
+<!--
+  Kensakan
+  A Tool for Stepping in Javascript Code without the Inspector
+
+  Copyright (C) 2022 Arash Kazemi <contact.arash.kazemi [at] gmail.com>
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Kensakan</title>
+    
+    <style>
+      body {
+        background: #ccc;
+        text-align: center;
+        padding: 2rem;
+        font-family: lucida sans, helvetica, verdana, sans;
+        color: #333;
+        line-height: 1.5rem;
+      }
+      #wrapper {
+        width: 100%;
+        max-width: 46rem;
+        margin: auto;
+      }
+      pre {
+        background: #fff;
+        border-radius: 1rem;
+        padding: 1rem;
+        text-align: left;
+        box-shadow: 0 0 1rem rgba(0,0,0,.1);
+      }
+      button {
+        background: #eee;
+        border-radius: 2rem;
+        padding: 1rem;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 0 .5rem rgba(0,0,0,.2);
+        transform: scale(1);
+        transition: all .5s;
+      }
+      button:active {
+        box-shadow: 0 0 .2rem rgba(0,0,0,.3);
+        transform: scale(.95);
+      }
+      button:disabled {
+        opacity: .3;
+      }
+
+
+      #editor {
+        height:  20rem;
+      }
+      .ace_gutter-cell.ace_breakpoint {
+        position: absolute;
+        background: #0062fd;
+        color: #fff;
+      }
+
+      .running {
+        background: #67bdc1;
+        z-index: 0;
+        position: absolute;
+      }
+    </style>
+  </head>
+  <body onload="on_load()"><div id="wrapper">
+    <p>
+      <h2>
+        Kensakan
+      </h2>
+      <p>A Tool for Stepping in Javascript Code without the Browser's Inspector</p>
+      <hr>
+    <p>
+      (
+      For more info see the
+      <a href="docs/index.html">Online Documentation</a> or the
+      <a href="https://github.com/arashkazemi/kensakan">Github Page</a>
+      )
+    </p>
+      You can change the code, and also toggle breakpoints by clicking on the gutter.<br>
+      Use <b>Step</b> for stepping through and use <b>Continue</b> for going until 
+      reaching the next breakpoint.<br><br>
+
+      Non-JSON objects like <i>pre</i> in this example are printed as {} here, but in the 
+      callback you can access the object itself.<br><br>
+      Notice that the parser can detect syntax errors and throws an error, but Kensakan 
+      doesn't interact with the run-time errors, so it should be handled either in the 
+      code itself or by an error handler. 
+    </p>
+    <pre id="editor" contenteditable
+>var pre = document.getElementById("result");
+
+function print(x) {
+  pre.innerHTML+=x+"\n";
+}
+
+for(let j=0;
+        j<10;
+        j++) 
+{
+  print(j);
+}
+    </pre>
+    <button onclick="start_run();">Start</button>
+    <button id="step-button" onclick="kensa.step();" disabled>Step</button>
+    <button id="continue-button" onclick="kensa.continue();" disabled>Continue</button>
+    <pre id="step-data">Next Step<hr>Watched Variables<hr></pre>
+    <pre id="result">Print Output<hr></pre>
+    <p>
+      And meanwhile, if you enjoy, please support this project by donating, Many Thanks!<br>
+
+      <a style="background: #41a2d8 url(https://donorbox.org/images/red_logo.png) no-repeat 37px;color: #fff;text-decoration: none;font-family: Verdana,sans-serif;display: inline-block;font-size: 16px;padding: 15px 38px;padding-left: 75px;-webkit-border-radius: 2px;-moz-border-radius: 2px;border-radius: 2px;box-shadow: 0 1px 0 0 #1f5a89;text-shadow: 0 1px rgba(0, 0, 0, 0.3);" href="https://donorbox.org/kensakan?default_interval=o&amount=30">Donate</a>
+      <br><br>
+    </p>
+    <small>
+      Copyright (C) 2022 Arash Kazemi &lt;contact.arash.kazemi [at] gmail.com&gt; <br>
+      <small>(Kensakan project is subject to the terms of BSD-2-Clause License, for more information see the LICENSE file in the root directory of the project)</small><br><br>
+
+    </small>
+    </pre>
+  </body>
+
+    <!-- 
+      This example uses ace.js editor, but in case ace is not loaded the example will 
+      continue to work without it, but you won't be able to toggle bookmarks and also 
+      the current line will only be written in text and not highlighted graphically.
+    -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.9.5/ace.js" integrity="sha512-wju2wMXmukx2760GKQBjykvRNeRY8LdMn6XnMPJQKRF7olV229IytqfkW9Z83lrdCVA168r4Ut4paNoRxJWoag==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+
+    <script src="dist/kensakan.min.js"></script>
+
+    <script>
+      var editor, marker;
+
+      var pre = document.getElementById("result");
+      var sd = document.getElementById("step-data");
+      var ed = document.getElementById("editor");
+
+      document.getElementById("step-button").disabled = true;
+      document.getElementById("continue-button").disabled = true;
+          
+      var kensa = new Kensakan ( 
+                          "",
+
+                          function(r,c,ws) { // step function (row,column,watched variables)
+                            sd.innerHTML="Next Step<hr>Row : " + r + "  Column: "+  c+"\n\n";
+                            sd.innerHTML+="Watched Variables<hr>" +  JSON.stringify(ws);
+
+                            if(typeof(ace)!='undefined') { // is ace.js present
+                              editor.session.removeMarker(marker);
+                              marker = addMarker(r-1,r-1);
+                            }
+                            return true; // tells to pause execution
+                          },
+        
+                          function() {
+                            sd.innerHTML+=("\nRUN ENDED."+"\n");
+
+                            if(typeof(ace)!='undefined') { // is ace.js present
+                              editor.session.removeMarker(marker);
+                            }
+
+                            document.getElementById("step-button").disabled = true;
+                            document.getElementById("continue-button").disabled = true;
+                          }
+
+                        );
+
+      function start_run() 
+      {
+        var code;
+
+        if(typeof(ace)!='undefined') { // is ace.js present
+          code = editor.getValue();
+        }
+        else { // simple text input
+          code = ed.innerHTML.replace(/&lt;/gm, '<').replace(/&gt;/gm, '>');
+        }
+
+        sd.innerHTML = "";
+        pre.innerHTML = "Print Output\n<hr>";
+
+        try {
+          kensa.prepare(code);
+        }
+        catch(e) {
+          sd.innerHTML="PARSE ERROR";
+          return;
+        }
+
+        kensa.debug();
+
+        document.getElementById("step-button").disabled = false;
+        document.getElementById("continue-button").disabled = false;
+    
+      }
+
+      function on_load()
+      {
+        if(typeof(ace)!="undefined") {  // is ace.js present
+
+          editor = ace.edit("editor");
+          editor.session.setMode("ace/mode/javascript");
+
+          editor.on("guttermousedown", function(e) {
+              var target = e.domEvent.target; 
+              if (target.className.indexOf("ace_gutter-cell") == -1)
+                  return; 
+              if (!editor.isFocused()) 
+                  return;   
+              if (e.clientX > 35 + target.getBoundingClientRect().left) 
+                  return; 
+
+              var breakpoints = e.editor.session.getBreakpoints(row, 0);
+              var row = e.getDocumentPosition().row;
+              if(typeof breakpoints[row] === typeof undefined)
+                  e.editor.session.setBreakpoint(row);
+              else 
+                  e.editor.session.clearBreakpoint(row);
+                e.stop();
+
+
+              // breakpoints should be in the form { 5: true, 10: true }
+
+              kensa.breakpoints = {};
+              for(a in editor.session.getBreakpoints()) kensa.breakpoints[parseInt(a)+1]=true;
+
+            });
+
+            editor.on("change", function(e) {
+              document.getElementById("step-button").disabled = true;
+              document.getElementById("continue-button").disabled = true;
+            });
+          }
+
+          else { // simple text input
+            editor.on("change", function(e) {
+              document.getElementById("step-button").disabled = true;
+              document.getElementById("continue-button").disabled = true;
+            });
+          }
+      }
+
+      if(typeof(ace)!="undefined") {
+        var rng = ace.require('ace/range').Range;
+        function addMarker(start = 0,end = 0,classes ='running',line="fullLine",override = false) 
+        {
+          return editor.session.addMarker(
+              new rng(start, 0, (end === 0 ? start : end), 1), 
+              classes, line, override 
+            );
+        }
+      }
+    </script>
+
+  </div></body>
+</html>

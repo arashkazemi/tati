@@ -1,0 +1,22 @@
+{
+    "opts": {
+        "template": "templates/default",
+        "encoding": "utf8",             
+        "destination": "./docs/",       
+        "recurse": true                 
+    },
+
+     "plugins": [
+        "plugins/markdown"
+    ],
+
+     "source": {
+        "include": ["./README.md"]
+    },
+
+    "templates": {
+        "default": {
+            "includeDate": false
+        }
+    }
+}
