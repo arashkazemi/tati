@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "A tool for stepping through and inspecting javascript code without browser's inspector.",
   "repository": "github:arashkazemi/kensakan",
+  "homepage": "https://arashkazemi.github.io/kensakan/",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack",

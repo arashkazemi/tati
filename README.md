@@ -23,12 +23,15 @@ version. So the only file you need to import is `kensakan.min.js`.
 
 ---
 
-The latest source code of Kensakan can be found in:
+You can see a demo of Kensakan at
+[https://arashkazemi.github.io/kensakan/](https://arashkazemi.github.io/kensakan/)
+
+The latest source code of Kensakan can be found at
 [https://github.com/arashkazemi/kensakan](https://github.com/arashkazemi/kensakan)
 
 To use, first download the source code, then extract it. The minified 
 script itself is available in the `/dist` directory and the documentation 
-can be found in ths `/docs` directory and also in the source files.
+can be found in the `/docs` directory and also in the source files.
 
 To build the project from scratch open a terminal in the root directory
 of the extracted files. Then to install the dependencies, run:
