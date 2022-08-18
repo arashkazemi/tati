@@ -1,6 +1,6 @@
 {
   "name": "kensakan",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A tool for stepping through and inspecting javascript code without browser's inspector.",
   "repository": "github:arashkazemi/kensakan",
   "homepage": "https://arashkazemi.github.io/kensakan/",
