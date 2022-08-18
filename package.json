@@ -1,9 +1,10 @@
 {
   "name": "kensakan",
-  "version": "1.0.1",
-  "description": "A tool for stepping through and inspecting javascript code without browser's inspector.",
+  "version": "1.0.2",
+  "description": "A Tool for Stepping Through Javascript Code without the Browser's Inspector",
   "repository": "github:arashkazemi/kensakan",
   "homepage": "https://arashkazemi.github.io/kensakan/",
+  "main": "dist/kensakan.min.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack",
@@ -19,7 +20,17 @@
     "breakpoint",
     "run"
   ],
-  "author": "Arash Kazemi",
+  "author": {
+    "name": "Arash Kazemi",
+    "email": "contact.arash.kazemi@gmail.com"
+  },
+  "maintainers": [
+    {
+      "name": "Arash Kazemi",
+      "email": "contact.arash.kazemi@gmail.com",
+      "web": "https://github.com/arashkazemi"
+    }
+  ],
   "license": "BSD-2-Clause",
   "dependencies": {
     "escodegen": "^2.0.0",

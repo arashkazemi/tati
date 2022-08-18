@@ -41,7 +41,8 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
     libraryExport: 'default',
     library: 'Kensakan',
-    libraryTarget: 'window'
+    libraryTarget: 'umd',
+    globalObject: 'this'
   },
   plugins: [
     {
