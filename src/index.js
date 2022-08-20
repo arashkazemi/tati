@@ -35,7 +35,7 @@ const escodegen = require("escodegen");
 class Kensakan {
 
   /**
-   * Creates an instance of Kensakan
+   * Creates an instance of Kensakan.
    * There can be multiple instances and each can be controlled separately.
    * 
    * @constructor
