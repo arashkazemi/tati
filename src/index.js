@@ -66,10 +66,11 @@ class Kensakan {
      * anything other than false or null, before calling prepare(), like:
      * 
      *         var k = new Kensakan (
-     *                "console.log(1);\nconsole.log(2);\nconsole.log(3);\n"
+     *                "console.log(1);\nconsole.log(2);\nconsole.log(3);\n",
+     *                function(r,c,ws) {return true;}
      *              );
      *     
-     *         k.breakpoints[2] = true;
+     *         k.breakpoints['2'] = true;
      *     
      *         k.debug(true); // runs until reaching the breakpoint on line 2 
      *                        // (output:  1) 
@@ -106,6 +107,7 @@ class Kensakan {
     this.resolve = null;
     this.run_to_breakpoint = false;
 
+    this.prepare(code);
   }
   /**
    * Parses the given code, and prepares it for the flow with control,
