@@ -115,8 +115,10 @@ class Kensakan {
     var perr = Kensakan.prototype.error_proxy.bind(this);
 
     if(____kensakan_is_browser____()) {
-      console.log("running under browser");
       window.addEventListener("unhandledrejection", perr);
+    }
+    else {
+      process.on('unhandledRejection', perr);
     }
 
     this.esp = null;
