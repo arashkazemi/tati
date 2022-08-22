@@ -28,7 +28,7 @@
 
 <header>
     
-        <h2><span class="attribs"><span class="type-signature"></span></span>Kensakan<span class="signature">(code, step_callback, stop_callback, step_loop_args)</span><span class="type-signature"></span></h2>
+        <h2><span class="attribs"><span class="type-signature"></span></span>Kensakan<span class="signature">(step_callback, stop_callback, error_callback, step_loop_args)</span><span class="type-signature"></span></h2>
         
     
 </header>
@@ -41,7 +41,7 @@
     
 
     
-    <h4 class="name" id="Kensakan"><span class="type-signature"></span>new Kensakan<span class="signature">(code, step_callback, stop_callback, step_loop_args)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="Kensakan"><span class="type-signature"></span>new Kensakan<span class="signature">(step_callback, stop_callback, error_callback, step_loop_args)</span><span class="type-signature"></span></h4>
     
 
     
@@ -49,7 +49,7 @@
 
 
 <div class="description">
-    <p>Creates an instance of Kensakan
+    <p>Creates an instance of Kensakan.
 There can be multiple instances and each can be controlled separately.</p>
 </div>
 
@@ -88,33 +88,6 @@ There can be multiple instances and each can be controlled separately.</p>
 
         <tr>
             
-                <td class="name"><code>code</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last"><p>the javascript code to compile/run.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
                 <td class="name"><code>step_callback</code></td>
             
 
@@ -137,11 +110,11 @@ There can be multiple instances and each can be controlled separately.</p>
                 </td>
             
 
-            <td class="description last"><p>the callback handler for stepping, is
+            <td class="description last"><p>The callback handler for stepping, is
 called when runner enters a breakpoint or steps to next line.
 If the step callback returns true, the execution will be paused until
-one of the functions <code>step()</code> or <code>continue()</code> is called. If it returns false
-the ececution continues to the step or breakpoint.</p></td>
+one of the functions <code>step()</code> or <code>continue()</code> is called. If it returns
+false the ececution continues to the step or breakpoint.</p></td>
         </tr>
 
     
@@ -170,8 +143,45 @@ the ececution continues to the step or breakpoint.</p></td>
                 </td>
             
 
-            <td class="description last"><p>is called when the function running is
+            <td class="description last"><p>Is called when the function running is
 finished.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>error_callback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+
+            
+                <td class="default">
+                
+                    null
+                
+                </td>
+            
+
+            <td class="description last"><p>Is called when there is an error in
+parse or run time. The first and second arguments are the line and
+column, third argument would be the type of error (parse
+or runtime), and the forth would be the error description.</p>
+<p>In case of parser errors, if error_callback argument is given to the constructor,
+Kensakan will call it.</p>
+<p>In case of runtime errors, if error_callback argument is given to the constructor,
+Kensakan will call it. But it will not cancel the event or stop its propagation so it
+doesn't interfere with any other code handling mechanism.</p></td>
         </tr>
 
     
@@ -200,7 +210,7 @@ finished.</p></td>
                 </td>
             
 
-            <td class="description last"><p>if set, it will also step into
+            <td class="description last"><p>If set, it will also step into
 loop test and update expressions, see <a href="Kensakan.html#step_loop_args">Kensakan#step_loop_args</a></p></td>
         </tr>
 
@@ -242,7 +252,7 @@ loop test and update expressions, see <a href="Kensakan.html#step_loop_args">Ken
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line58">line 58</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line70">line 70</a>
     </li></ul></dd>
     
 
@@ -301,17 +311,17 @@ loop test and update expressions, see <a href="Kensakan.html#step_loop_args">Ken
     <p>Set the breakpoint lines in this object to
 anything other than false or null, before calling prepare(), like:</p>
 <pre><code>    var k = new Kensakan (
-           &quot;console.log(1);\nconsole.log(2);\nconsole.log(3);\n&quot;,
            function(r,c,ws) {return true;}
          );
 
-    k.breakpoints['2'] = true;
+    k.prepare(&quot;console.log(1);\nconsole.log(2);\nconsole.log(3);\n&quot;);
+    k.set_breakpoint(2);
 
     k.debug(true); // runs until reaching the breakpoint on line 2 
                    // (output:  1) 
 
-    k.continue() // runs until end as there is no other breakpoints 
-                 // (output:  2,3)
+    k.continue();  // runs until end as there is no other breakpoints 
+                   // (output:  2,3)
 </code></pre>
 </div>
 
@@ -350,7 +360,7 @@ anything other than false or null, before calling prepare(), like:</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line82">line 82</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line94">line 94</a>
     </li></ul></dd>
     
 
@@ -417,7 +427,7 @@ be applied.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line94">line 94</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line106">line 106</a>
     </li></ul></dd>
     
 
@@ -438,6 +448,182 @@ be applied.</p>
 
     
         <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="clear_all_breakpoints"><span class="type-signature"></span>clear_all_breakpoints<span class="signature">()</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>Clears all the breakpoints.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line267">line 267</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="clear_breakpoint"><span class="type-signature"></span>clear_breakpoint<span class="signature">()</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>Clears the breakpoint on the given line.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line258">line 258</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         
             
@@ -499,7 +685,7 @@ reaching a breakpoint.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line181">line 181</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line238">line 238</a>
     </li></ul></dd>
     
 
@@ -605,8 +791,8 @@ call the <code>step_callback</code> that was given to constructor.</p>
                 </td>
             
 
-            <td class="description last"><p>if true it will continue running
-until reaching a breakpoint. if false, it will step line by line.</p></td>
+            <td class="description last"><p>If true it will continue running
+until reaching a breakpoint. If false, it will step line by line.</p></td>
         </tr>
 
     
@@ -647,7 +833,7 @@ until reaching a breakpoint. if false, it will step line by line.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line156">line 156</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line203">line 203</a>
     </li></ul></dd>
     
 
@@ -821,7 +1007,7 @@ snapshot of the local variables in an object too.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line122">line 122</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line149">line 149</a>
     </li></ul></dd>
     
 
@@ -911,7 +1097,95 @@ the two debug/release procedures would be the same.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line141">line 141</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line177">line 177</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="set_breakpoint"><span class="type-signature"></span>set_breakpoint<span class="signature">()</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>Sets a breakpoint on the given line.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line250">line 250</a>
     </li></ul></dd>
     
 
@@ -1000,7 +1274,7 @@ It will call the <code>step_callback</code> that was given to constructor.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line167">line 167</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line224">line 224</a>
     </li></ul></dd>
     
 

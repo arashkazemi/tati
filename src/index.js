@@ -1,7 +1,7 @@
 /* 
 
   Kensakan 
-  A Tool for Stepping in Javascript Code without the Inspector
+  A Tool for Stepping Through Javascript Code without the Browser's Inspector
 
   Copyright (C) 2022 Arash Kazemi <contact.arash.kazemi@gmail.com>
   
@@ -32,6 +32,8 @@
 const esprima = require("esprima");
 const escodegen = require("escodegen");
 
+let ____kensakan_is_browser____ = new Function("try {return this===window;}catch(e){ return false;}");
+
 class Kensakan {
 
   /**
@@ -40,24 +42,34 @@ class Kensakan {
    * 
    * @constructor
    * 
-   * @param {string} code - the javascript code to compile/run.
-   * 
-   * @param {function} step_callback - the callback handler for stepping, is 
+   * @param {function} step_callback - The callback handler for stepping, is 
    *        called when runner enters a breakpoint or steps to next line.
    *        If the step callback returns true, the execution will be paused until
-   *        one of the functions `step()` or `continue()` is called. If it returns false
-   *        the ececution continues to the step or breakpoint.
+   *        one of the functions `step()` or `continue()` is called. If it returns 
+   *        false the ececution continues to the step or breakpoint.
    * 
-   * @param {function} stop_callback - is called when the function running is 
+   * @param {function} stop_callback - Is called when the function running is 
    *        finished.
    * 
-   * @param {boolean} step_loop_args - if set, it will also step into 
+   * @param {function} error_callback - Is called when there is an error in
+   *        parse or run time. The first and second arguments are the line and
+   *        column, third argument would be the type of error (parse
+   *        or runtime), and the forth would be the error description. 
+   * 
+   * In case of parser errors, if error_callback argument is given to the constructor, 
+   * Kensakan will call it.
+   *
+   * In case of runtime errors, if error_callback argument is given to the constructor, 
+   * Kensakan will call it. But it will not cancel the event or stop its propagation so it 
+   * doesn't interfere with any other code handling mechanism. 
+
+   * @param {boolean} step_loop_args - If set, it will also step into 
    *        loop test and update expressions, see {@link Kensakan#step_loop_args}
    */
 
-  constructor(  code="", 
-                step_callback=null, 
+  constructor(  step_callback=null, 
                 stop_callback=null, 
+                error_callback=null, 
                 step_loop_args=true ) 
   {
 
@@ -66,17 +78,17 @@ class Kensakan {
      * anything other than false or null, before calling prepare(), like:
      * 
      *         var k = new Kensakan (
-     *                "console.log(1);\nconsole.log(2);\nconsole.log(3);\n",
      *                function(r,c,ws) {return true;}
      *              );
      *     
-     *         k.breakpoints['2'] = true;
+     *         k.prepare("console.log(1);\nconsole.log(2);\nconsole.log(3);\n");
+     *         k.set_breakpoint(2);
      *     
      *         k.debug(true); // runs until reaching the breakpoint on line 2 
      *                        // (output:  1) 
      * 
-     *         k.continue() // runs until end as there is no other breakpoints 
-     *                      // (output:  2,3)
+     *         k.continue();  // runs until end as there is no other breakpoints 
+     *                        // (output:  2,3)
      */
 
     this.breakpoints = {};
@@ -100,14 +112,29 @@ class Kensakan {
     this.id = Kensakan.prototype.instances.length;
     Kensakan.prototype.instances.push(this);
 
+    var perr = Kensakan.prototype.error_proxy.bind(this);
+
+    if(____kensakan_is_browser____()) {
+      console.log("running under browser");
+      window.addEventListener("unhandledrejection", perr);
+    }
+
     this.esp = null;
     
     this.step_callback = step_callback;
     this.stop_callback = stop_callback;
+    this.error_callback = error_callback;
     this.resolve = null;
     this.run_to_breakpoint = false;
 
-    this.prepare(code);
+    this.last_column = -1;
+    this.last_row = -1;
+
+    this.error = null;
+
+    this.run_func = null;
+    this.debug_func = null;
+
   }
   /**
    * Parses the given code, and prepares it for the flow with control,
@@ -123,9 +150,18 @@ class Kensakan {
   {
     var ws = watch_locals ? [[]] : null;
 
-    this.esp = esprima.parse( code, {loc:true} );
+    try {
+      this.esp = esprima.parse( code, {loc:true} );
+    }
+    catch(e) {
+      if(this.error_callback!=null) {
+        this.error_callback(e.lineNumber, e.column, "parse", e.description);
+      }
+      this.error = e;
+    }
 
     this.run_func = eval("(async function() {" + escodegen.generate(this.esp) + "})");
+
     this.asyncize(this.esp);
     this.kensakize(this.esp, ws);
     this.debug_func = eval("(async function() {" + escodegen.generate(this.esp) + "})");
@@ -140,7 +176,18 @@ class Kensakan {
 
   run() 
   {
-    this.run_func().then( this.stop_callback );
+    if(this.run_func==null) return;
+
+    this.run_func().then( (function() {
+
+      if(this.stop_callback!=null) {
+        this.stop_callback();
+      }
+
+      this.last_row=-1;
+      this.last_column=-1;
+
+    }).bind(this) );
   }
 
 
@@ -149,14 +196,24 @@ class Kensakan {
    * You can step line by line or run until reaching a breakpoint. It will 
    * call the `step_callback` that was given to constructor.
    * 
-   * @param {boolean} run_to_breakpoint - if true it will continue running 
-   * until reaching a breakpoint. if false, it will step line by line.
+   * @param {boolean} run_to_breakpoint - If true it will continue running 
+   * until reaching a breakpoint. If false, it will step line by line.
    */
 
   debug(run_to_breakpoint=false) 
   {
+    if(this.debug_func==null) return;
     this.run_to_breakpoint = run_to_breakpoint;
-    this.debug_func().then( this.stop_callback );
+    this.debug_func().then( (function() {
+
+      if(this.stop_callback!=null) {
+        this.stop_callback();
+      }
+      
+      this.last_row=-1;
+      this.last_column=-1;
+
+    }).bind(this) );
   }
 
   /**
@@ -185,6 +242,34 @@ class Kensakan {
       this.resolve(true);
     }
   }
+
+  /**
+   * Sets a breakpoint on the given line.
+   */
+
+  set_breakpoint(line) {
+    this.breakpoints[''+line] = true;
+  }
+
+  /**
+   * Clears the breakpoint on the given line.
+   */
+
+  clear_breakpoint(line) {
+    delete this.breakpoints[''+line];
+  }
+
+
+  /**
+   * Clears all the breakpoints.
+   */
+
+  clear_all_breakpoints() {
+    this.breakpoints = {};
+  }
+
+
+  /* Internal functions */
 
   wrap(a, ws) 
   {
@@ -347,32 +432,41 @@ class Kensakan {
       }
     }
   }
+
+
 }
+
+
 
 Kensakan.prototype.instances = [];
 
-Kensakan.prototype.template_watch_args = async function(bid,r,c) 
+Kensakan.prototype.template_watch_args = async function(id,r,c) 
 {
 
-  let b = Kensakan.prototype.instances[bid];
+  let k = Kensakan.prototype.instances[id];
   let vals={};
 
   for(let i=3;i<arguments.length;i+=2) {
     if(arguments[i+1]==Kensakan.prototype.undefined) {
-      vals[arguments[i]]=b.undefined;
+      vals[arguments[i]]=k.undefined;
     }
     else {
       vals[arguments[i]]=arguments[i+1];
     }
   }
 
-  if( b.run_to_breakpoint ) {
+  c++;
 
-    if(b.breakpoints[r]) {
-      if( b.step_callback(r,c,vals) ) {
+  k.last_column = c;
+  k.last_row = r;
+
+  if( k.run_to_breakpoint ) {
+
+    if(k.breakpoints[r]) {
+      if( k.step_callback(r,c,vals) ) {
         return new Promise(
                 function(res,rej) {
-                  b.resolve=res;
+                  k.resolve=res;
                 }
             );
       }
@@ -380,10 +474,10 @@ Kensakan.prototype.template_watch_args = async function(bid,r,c)
 
   }
   else {
-    if( b.step_callback(r,c,vals) ) {
+    if( k.step_callback(r,c,vals) ) {
       return new Promise(
               function(res,rej) {
-                b.resolve=res;
+                k.resolve=res;
               }
           );
     }
@@ -391,18 +485,24 @@ Kensakan.prototype.template_watch_args = async function(bid,r,c)
   return true;
 }
 
-Kensakan.prototype.template_no_watch_args = async function(b,r,c) 
+
+Kensakan.prototype.template_no_watch_args = async function(id,r,c) 
 {
 
-  var b = Kensakan.prototype.instances[b];
+  var k = Kensakan.prototype.instances[id];
+  
+  c++;
 
-  if( b.run_to_breakpoint ) {
+  k.last_column = c;
+  k.last_row = r;
 
-    if(b.breakpoints[r]) {
-      if( b.step_callback(r,c) ) {
+  if( k.run_to_breakpoint ) {
+
+    if(k.breakpoints[r]) {
+      if( k.step_callback(r,c) ) {
         return new Promise(
                 function(res,rej) {
-                  b.resolve=res;
+                  k.resolve=res;
                 }
             );
       }
@@ -410,17 +510,16 @@ Kensakan.prototype.template_no_watch_args = async function(b,r,c)
 
   }
   else {
-    if( b.step_callback(r,c) ) {
+    if( k.step_callback(r,c) ) {
       return new Promise(
               function(res,rej) {
-                b.resolve=res;
+                k.resolve=res;
               }
           );
     }
   }
   return true;
 }
-
 
 Kensakan.prototype.template_generate_watch_args = function(ws)
 {
@@ -469,7 +568,6 @@ Kensakan.prototype.template_generate_watch_args = function(ws)
   return wss;
 }
 
-
 Kensakan.prototype.template_block = function(id,el,ws)
 {
 
@@ -513,7 +611,6 @@ Kensakan.prototype.template_block = function(id,el,ws)
 
   return res;
 };
-
 
 Kensakan.prototype.template_inline = function(id,el,ws)
 {
@@ -560,5 +657,16 @@ Kensakan.prototype.template_inline = function(id,el,ws)
 
   return res;
 };
+
+Kensakan.prototype.error_proxy = function(err)
+{
+  if(this.error_callback!=null) {
+    this.error_callback(this.last_row, this.last_column, "runtime", err.reason.message);
+  }
+  this.error = err;
+
+  this.last_row=-1;
+  this.last_column=-1;
+}
 
 export default Kensakan;

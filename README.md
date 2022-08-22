@@ -7,9 +7,8 @@
 Kensakan is a javascript library that makes it possible to debug, step,
 pause and watch local variables in javascript code without using browser's
 internal inspector. It works by restructuring and running the given code in 
-an async manner, and interacting with it using its own async function 
-calls. It can even step into the for loop test and update statements or
-follow the execution inside try-catch blocks and inline functions.
+asynchronously. It can even step into the for loop test and update statements 
+or follow the execution inside try-catch blocks and arrow functions.
 
 This can be used in online development environments, testing, debugging,
 and even education. The API is designed to make things as easy as possible 
@@ -33,8 +32,24 @@ and then in your javascript code:
 
 To use in a webpage, first download the source code and extract it. The minified 
 script itself is available in the `/dist` directory and the documentation 
-can be found in the `/docs` and also in the source files. To know how to
-use Kensakan, see the included example and the class documentation.
+can be found in the `/docs` and also in the source files. 
+
+As a simple example Kensakan can be used like this:
+
+        var k = new Kensakan (
+                                function(r,c,ws) {return true;}
+                             );
+
+        k.prepare("console.log(1);\nconsole.log(2);\nconsole.log(3);\n");
+        k.set_breakpoint(2);
+
+        k.debug(true); // runs until reaching the breakpoint on line 2 
+                       // (output:  1) 
+        k.continue();  // runs until end as there is no other breakpoints 
+                       // (output:  2,3)
+
+To know how to more about using Kensakan, see the included example and the class 
+documentation.
 
 To build the project from scratch open a terminal in the root directory
 of the extracted files. Then to install the dependencies, run:
