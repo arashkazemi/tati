@@ -6,7 +6,7 @@
 
 Kensakan is a javascript library that makes it possible to debug, step,
 pause and watch local variables in javascript code without using browser's
-internal inspector. It works by restructuring and running the given code in 
+internal inspector. It works by restructuring and running the given code 
 asynchronously. It can even step into the for loop test and update statements 
 or follow the execution inside try-catch blocks and arrow functions.
 
