@@ -31,15 +31,30 @@
   <head>
     <meta charset="utf-8" />
     <title>Kensakan</title>
-    
+    <link href='https://fonts.googleapis.com/css?family=Quicksand' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=PT+Mono' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha512-1sCRPdkRXhBV2PBLUdRb4tMg1w2YPf37qatUFeS7zlBy7jJI8Lf4VHwWfZZfpXtYSLy85pkm9GaYVYMfw5BC1A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
       body {
-        background: #ccc;
+        background: #e6e6e6;
         text-align: center;
         padding: 2rem;
-        font-family: lucida sans, helvetica, verdana, sans;
-        color: #333;
+        color: #0a3164;
         line-height: 1.5rem;
+      }
+      *:not(pre):not(#editor *):not(.fa) {
+        font-family: 'Quicksand', lucida sans, helvetica, verdana, sans;
+        font-size:  14.5px;
+      }
+      h2 {
+        font-size:  140% !important;
+      }
+      small {
+        font-size: 90% !important;
+      }
+      .fa {
+        margin:  0 .3rem;
+        display: inline-block;
       }
       #wrapper {
         width: 100%;
@@ -47,32 +62,50 @@
         margin: auto;
       }
 
+      pre, #editor, #editor * {
+        font-family: 'PT Mono', monospace;
+        line-height: 1.5rem;
+        font-size:  13px;
+        text-shadow: none;
+     }
       pre {
         background: #fff;
-        border-radius: 1rem;
+        border-radius: .7rem;
         padding: 1rem;
         text-align: left;
-        box-shadow: 0 0 1rem rgba(0,0,0,.1);
+        box-shadow: 0 0 .5rem rgba(0,0,0,.05);
         margin: 2rem 0;
       }
+
       button {
-        background: #eee;
+        background: #fff;
         border-radius: 2rem;
-        padding: 1rem;
+        padding: 1.05rem 1.5rem .95rem 1.5rem;
         border: none;
         cursor: pointer;
         box-shadow: 0 0 .5rem rgba(0,0,0,.2);
         transform: scale(1);
-        transition: all .5s;
+        transition: all .1s;
+        font-variant: small-caps;
+        margin: .5rem;
       }
-      button:active {
+      .donate-button {
+        transition: all .1s;
+        box-shadow: 0 0 .5rem rgba(0,0,0,.2);        
+        border-radius: .5rem;
+      }
+      button:active, .donate-button:active {
         box-shadow: 0 0 .2rem rgba(0,0,0,.3);
-        transform: scale(.95);
+        transform: scale(.98) !important;
+      }
+      button:hover:not(:disabled), .donate-button:hover:not(:disabled) {
+        box-shadow: 0 0 .7rem rgba(0,0,0,.2);
+        transform: scale(1.01);
       }
       button:disabled {
         opacity: .3;
+        box-shadow: 0 0 .2rem rgba(0,0,0,.1);
       }
-
 
       #editor {
         height:  20rem;
@@ -89,6 +122,15 @@
         position: absolute;
       }
 
+      hr {
+        opacity: .1;
+        height: 2px;
+      }
+
+      #no-ace-notice {
+        display: none;
+      }
+
       @media screen and (min-width: 1024px) {
         #code-stuff {
           position: absolute;
@@ -98,6 +140,8 @@
           bottom: 0;
           padding: 2rem;
           overflow: auto;
+          border-right: 1px solid rgba(0,0,0,.05);
+          margin-right: 1px;
         }
         #outputs {
           position: absolute;
@@ -107,7 +151,7 @@
           bottom: 0;
           padding: 2rem;
           overflow: auto;
-          border-left: 1px solid #999;
+          border-left: 1px solid rgba(0,0,0,.05);
         }
       }
 
@@ -116,23 +160,33 @@
   <body onload="on_load()">
     <div id="wrapper">
       <div id="code-stuff">
+        <h2>
+          検査官<br>
+          Kensakan
+        </h2>
         <p>
-          <h2>
-            Kensakan
-          </h2>
-          <p>A Tool for Stepping Through Javascript Code without the Browser's Inspector</p>
-          <hr>
-        <p>
+          A Tool for Stepping Through Javascript Code without the Browser's Inspector<br>
+          <small>- In Japanese "Kensakan" means the Inspector -</small>
+          <hr style="width:50%;margin:1rem auto;">
           (
-          For more info see the
-          <a href="docs/index.html">Online Documentation</a> or the
-          <a href="https://github.com/arashkazemi/kensakan">Github Page</a>
+          <a href="docs/index.html">Online Documentation</a> |
+          <a href="https://github.com/arashkazemi/kensakan">Github</a> |
+          <a href="https://www.npmjs.com/package/kensakan">npm Package</a>
           )
         </p>
-        <p>
+        <p id="ace-notice">
           You can change the code, and also toggle breakpoints by clicking on the gutter.<br>
+          Use <b>Start</b> to begin debugging the code.<br>
           Use <b>Step</b> for stepping through and use <b>Continue</b> for going until 
-          reaching the next breakpoint.<br>
+          the next breakpoint or end.<br>
+        </p>
+        <p id="no-ace-notice">
+          You can change the code, but toggling breakpoints and also highlighting 
+          the next line is deactivated because ace editor is not loaded (the row 
+          is written in the next step box).<br>
+          Use <b>Start</b> to begin debugging the code.<br>
+          Use <b>Step</b> for stepping through and use <b>Continue</b> for going until 
+          the next breakpoint or end.<br>
         </p>
 
 <pre id="editor" contenteditable
@@ -149,26 +203,26 @@
     print(j);
   }
 </pre>
-        <button onclick="start_run();">Start</button>
-        <button id="step-button" onclick="kensa.step();" disabled>Step</button>
-        <button id="continue-button" onclick="kensa.continue();" disabled>Continue</button>
+        <button onclick="start_run();"><span class="fa fa-play" aria-hidden="true"></span> Start</button>
+        <button id="step-button" onclick="kensa.step();" disabled><span class="fa fa-step-forward" aria-hidden="true"></span>Step</button>
+        <button id="continue-button" onclick="kensa.continue();" disabled><span class="fa far fa-play-circle" aria-hidden="true"></span>Continue</button>
       </div>
       <div id='outputs'>
         <pre id="step-data">Next Step<hr>Watched Variables<hr></pre>
         <pre id="result">Print Output<hr></pre>
-        <p>
+        <p><small>
           Non-JSON objects like <i>pre</i> in this example are printed as {} here, but in the 
-          callback you can access the object itself.<br><br>
-        </p>
+          callback you can access the object itself.<br>
+        </small></p>
 
         <p>
           And meanwhile, if you enjoy, please support this project by donating, Many Thanks!<br>
 
-          <a style="background: #41a2d8 url(https://donorbox.org/images/red_logo.png) no-repeat 37px;color: #fff;text-decoration: none;font-family: Verdana,sans-serif;display: inline-block;font-size: 16px;padding: 15px 38px;padding-left: 75px;-webkit-border-radius: 2px;-moz-border-radius: 2px;border-radius: 2px;box-shadow: 0 1px 0 0 #1f5a89;text-shadow: 0 1px rgba(0, 0, 0, 0.3);" href="https://donorbox.org/kensakan?default_interval=o&amount=30">Donate</a>
+          <a class="donate-button" style="background: #41a2d8 url(https://donorbox.org/images/red_logo.png) no-repeat 37px;color: #fff;text-decoration: none;display: inline-block;font-size: 16px;padding: 15px 38px;padding-left: 75px;text-shadow: 0 1px rgba(0, 0, 0, 0.3);margin-top:.5rem;" href="https://donorbox.org/kensakan?default_interval=o&amount=30">Donate</a>
           <br><br>
         </p>
         <small>
-          Copyright (C) 2022 Arash Kazemi &lt;contact.arash.kazemi [at] gmail.com&gt; <br>
+          Copyright (C) 2022 Arash Kazemi &lt;contact.arash.kazemi@gmail.com&gt; <br>
           <small>(Kensakan project is subject to the terms of BSD-2-Clause License, for more information see the LICENSE file in the root directory of the project)</small><br><br>
         </small>
         </pre>
@@ -288,6 +342,8 @@
       }
 
       else { // simple text input
+        document.getElementById("ace-notice").style.display = "none";
+        document.getElementById("no-ace-notice").style.display = "block";
         ed.onkeydown = function(e) {
           document.getElementById("step-button").disabled = true;
           document.getElementById("continue-button").disabled = true;
