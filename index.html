@@ -39,12 +39,12 @@
         background: #e6e6e6;
         text-align: center;
         padding: 2rem;
-        color: #0a3164;
+        color: #052154;
         line-height: 1.5rem;
       }
       *:not(pre):not(#editor *):not(.fa) {
         font-family: 'Quicksand', lucida sans, helvetica, verdana, sans;
-        font-size:  14.5px;
+        font-size:  15px;
       }
       h2 {
         font-size:  140% !important;
@@ -192,16 +192,16 @@
 <pre id="editor" contenteditable
 >var pre = document.getElementById("result");
 
-  function print(x) {
-    pre.innerHTML+=x+"\n";
-  }
+function print(x) {
+  pre.innerHTML+=x+"\n";
+}
 
-  for(let j=0;
-          j<10;
-          j++) 
-  {
-    print(j);
-  }
+for(let j=0;
+        j<10;
+        j++) 
+{
+  print(j);
+}
 </pre>
         <button onclick="start_run();"><span class="fa fa-play" aria-hidden="true"></span> Start</button>
         <button id="step-button" onclick="kensa.step();" disabled><span class="fa fa-step-forward" aria-hidden="true"></span>Step</button>
