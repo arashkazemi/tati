@@ -42,7 +42,7 @@
         color: #052154;
         line-height: 1.5rem;
       }
-      *:not(pre):not(#editor *):not(.fa) {
+      *:not(pre):not(pre *):not(#editor *):not(.fa) {
         font-family: 'Quicksand', lucida sans, helvetica, verdana, sans;
         font-size:  15px;
       }
@@ -61,20 +61,20 @@
         margin: auto;
       }
 
-      pre, #editor, #editor * {
+      pre, pre *, #editor, #editor * {
         font-family: 'PT Mono', monospace;
         line-height: 1.5rem;
         font-size:  13px;
         text-shadow: none;
-        max-width: 1000px;
-        margin: 2rem auto;
      }
-      pre {
+      pre, #editor {
+        max-width: 1000px;
         background: #fff;
         border-radius: .7rem;
         padding: 1rem;
         text-align: left;
         box-shadow: 0 0 .5rem rgba(0,0,0,.05);
+        margin: 2rem auto;
       }
 
       button {
@@ -286,9 +286,9 @@ for(let j=0;
                           document.getElementById("continue-button").disabled = true;
                         },
 
-                        function(r,c,et,em) {
-                          let tp = et.toUpperCase() + " ERROR";
-                          sd.innerHTML = `<div style='color:#d00'>${tp}<br>Row: ${r}, Column: ${c}<br>${em}</div>`;
+                        function(r,c,error_type,error_desc) {
+                          let tp = error_type.toUpperCase() + " ERROR";
+                          sd.innerHTML = `<div style='color:#d00'>${tp}<br>Row: ${r}, Column: ${c}<br>${error_desc}</div>`;
                         }
 
                       );
