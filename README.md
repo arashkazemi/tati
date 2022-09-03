@@ -48,7 +48,7 @@ As a simple example Kensakan can be used like this:
         k.continue();  // runs until end as there is no other breakpoints 
                        // (output:  2,3)
 
-To know how to more about using Kensakan, see the included example and the class 
+To know more about using Kensakan, see the included example and the class 
 documentation.
 
 To build the project from scratch open a terminal in the root directory

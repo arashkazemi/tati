@@ -137,7 +137,11 @@ class Kensakan {
     this.run_func = null;
     this.debug_func = null;
 
+    this.__esprima__ = esprima;
+    this.__escodegen__ = escodegen;
   }
+
+  
   /**
    * Parses the given code, and prepares it for the flow with control,
    * throws exception if there is a syntax problem in code.
