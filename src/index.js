@@ -42,8 +42,14 @@ class Kensakan {
    * 
    * @constructor
    * 
-   * @param {function} step_callback - The callback handler for stepping, is 
-   *        called when runner enters a breakpoint or steps to next line.
+   * @param {function} step_callback - The callback handler for stepping. It is 
+   *        called before the runner runs a breakpoint or steps to the next line. 
+   *        The row and column of the next step is given as the first and second 
+   *        arguments. If the watch flag is set, a third argument of watches values
+   *        is also passed to the callback. The watched values is a dictionary, 
+   *        containing values of the local variables before running that step. If a 
+   *        variable is shadowed by another, the most recent value is shown.
+   * 
    *        If the step callback returns true, the execution will be paused until
    *        one of the functions `step()` or `continue()` is called. If it returns 
    *        false the execution continues to the step or breakpoint.

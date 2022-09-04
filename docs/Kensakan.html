@@ -110,11 +110,17 @@ There can be multiple instances and each can be controlled separately.</p>
                 </td>
             
 
-            <td class="description last"><p>The callback handler for stepping, is
-called when runner enters a breakpoint or steps to next line.
-If the step callback returns true, the execution will be paused until
-one of the functions <code>step()</code> or <code>continue()</code> is called. If it returns
-false the execution continues to the step or breakpoint.</p></td>
+            <td class="description last"><p>The callback handler for stepping. It is
+called before the runner runs a breakpoint or steps to the next line.
+The row and column of the next step is given as the first and second
+arguments. If the watch flag is set, a third argument of watches values
+is also passed to the callback. The watched values is a dictionary,
+containing values of the local variables before running that step. If a
+variable is shadowed by another, the most recent value is shown.</p>
+<pre><code>   If the step callback returns true, the execution will be paused until
+   one of the functions `step()` or `continue()` is called. If it returns 
+   false the execution continues to the step or breakpoint.
+</code></pre></td>
         </tr>
 
     
@@ -252,7 +258,7 @@ loop test and update expressions, see <a href="Kensakan.html#step_loop_args">Ken
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line70">line 70</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line76">line 76</a>
     </li></ul></dd>
     
 
@@ -360,7 +366,7 @@ anything other than false or null, before calling prepare(), like:</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line94">line 94</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line100">line 100</a>
     </li></ul></dd>
     
 
@@ -427,7 +433,7 @@ be applied.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line106">line 106</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line112">line 112</a>
     </li></ul></dd>
     
 
@@ -507,7 +513,7 @@ be applied.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line273">line 273</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line279">line 279</a>
     </li></ul></dd>
     
 
@@ -595,7 +601,7 @@ be applied.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line264">line 264</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line270">line 270</a>
     </li></ul></dd>
     
 
@@ -685,7 +691,7 @@ reaching a breakpoint.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line244">line 244</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line250">line 250</a>
     </li></ul></dd>
     
 
@@ -833,7 +839,7 @@ until reaching a breakpoint. If false, it will step line by line.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line209">line 209</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line215">line 215</a>
     </li></ul></dd>
     
 
@@ -1007,7 +1013,7 @@ snapshot of the local variables in an object too.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line155">line 155</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line161">line 161</a>
     </li></ul></dd>
     
 
@@ -1097,7 +1103,7 @@ the two debug/release procedures would be the same.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line183">line 183</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line189">line 189</a>
     </li></ul></dd>
     
 
@@ -1185,7 +1191,7 @@ the two debug/release procedures would be the same.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line256">line 256</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line262">line 262</a>
     </li></ul></dd>
     
 
@@ -1274,7 +1280,7 @@ It will call the <code>step_callback</code> that was given to constructor.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="index.js.html">index.js</a>, <a href="index.js.html#line230">line 230</a>
+        <a href="index.js.html">index.js</a>, <a href="index.js.html#line236">line 236</a>
     </li></ul></dd>
     
 
