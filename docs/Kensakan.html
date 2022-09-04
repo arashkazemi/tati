@@ -117,10 +117,9 @@ arguments. If the watch flag is set, a third argument of watches values
 is also passed to the callback. The watched values is a dictionary,
 containing values of the local variables before running that step. If a
 variable is shadowed by another, the most recent value is shown.</p>
-<pre><code>   If the step callback returns true, the execution will be paused until
-   one of the functions `step()` or `continue()` is called. If it returns 
-   false the execution continues to the step or breakpoint.
-</code></pre></td>
+<p>If the step callback returns true, the execution will be paused until
+one of the functions <code>step()</code> or <code>continue()</code> is called. If it returns
+false the execution continues to the step or breakpoint.</p></td>
         </tr>
 
     
@@ -149,7 +148,7 @@ variable is shadowed by another, the most recent value is shown.</p>
                 </td>
             
 
-            <td class="description last"><p>Is called when the function running is
+            <td class="description last"><p>Is called when the running of the code is
 finished.</p></td>
         </tr>
 

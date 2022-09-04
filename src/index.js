@@ -50,11 +50,11 @@ class Kensakan {
    *        containing values of the local variables before running that step. If a 
    *        variable is shadowed by another, the most recent value is shown.
    * 
-   *        If the step callback returns true, the execution will be paused until
-   *        one of the functions `step()` or `continue()` is called. If it returns 
-   *        false the execution continues to the step or breakpoint.
+   * If the step callback returns true, the execution will be paused until
+   * one of the functions `step()` or `continue()` is called. If it returns 
+   * false the execution continues to the step or breakpoint.
    * 
-   * @param {function} stop_callback - Is called when the function running is 
+   * @param {function} stop_callback - Is called when the running of the code is 
    *        finished.
    * 
    * @param {function} error_callback - Is called when there is an error in
