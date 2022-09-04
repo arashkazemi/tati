@@ -81,7 +81,7 @@ class Kensakan {
 
     /**
      * Set the breakpoint lines in this object to 
-     * anything other than false or null, before calling prepare(), like:
+     * anything other than false or null, like:
      * 
      *         var k = new Kensakan (
      *                function(r,c,ws) {return true;}
