@@ -46,7 +46,7 @@ class Kensakan {
    *        called when runner enters a breakpoint or steps to next line.
    *        If the step callback returns true, the execution will be paused until
    *        one of the functions `step()` or `continue()` is called. If it returns 
-   *        false the ececution continues to the step or breakpoint.
+   *        false the execution continues to the step or breakpoint.
    * 
    * @param {function} stop_callback - Is called when the function running is 
    *        finished.
