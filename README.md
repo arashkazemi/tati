@@ -48,6 +48,16 @@ As a simple example Kensakan can be used like this:
         k.continue();  // runs until end as there is no other breakpoints 
                        // (output:  2,3)
 
+Kensakan is also able to set the script context. This can be used to setup
+environment or even mask global objects like `document` or `window`. For example
+calling
+
+        k.set_context({document: null, window: null, foo: 123});
+
+before calling the `prepare` function will mask both `document` and `window`
+objects and also introduces a foo variable that can be accessed anywhere in
+the target script.
+
 To know more about using Kensakan, see the included example and the class 
 documentation.
 
@@ -65,7 +75,7 @@ To build and pack the script again run:
 
         npm run build
 
-And to regenrate the documentation pages run:
+And to regenerate the documentation pages run:
 
         npm run jsdoc
 

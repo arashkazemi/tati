@@ -81,6 +81,14 @@ can be found in the <code>/docs</code> and also in the source files.</p>
     k.continue();  // runs until end as there is no other breakpoints 
                    // (output:  2,3)
 </code></pre>
+<p>Kensakan is also able to set the script context. This can be used to setup
+environment or even mask global objects like <code>document</code> or <code>window</code>. For example
+calling</p>
+<pre><code>    k.set_context({document: null, window: null, foo: 123});
+</code></pre>
+<p>before calling the <code>prepare</code> function will mask both <code>document</code> and <code>window</code>
+objects and also introduces a foo variable that can be accessed anywhere in
+the target script.</p>
 <p>To know more about using Kensakan, see the included example and the class
 documentation.</p>
 <p>To build the project from scratch open a terminal in the root directory
@@ -94,7 +102,7 @@ running:</p>
 <p>To build and pack the script again run:</p>
 <pre><code>    npm run build
 </code></pre>
-<p>And to regenrate the documentation pages run:</p>
+<p>And to regenerate the documentation pages run:</p>
 <pre><code>    npm run jsdoc
 </code></pre>
 <p>And meanwhile, if you enjoy please support this project by donating,

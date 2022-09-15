@@ -158,7 +158,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ----------------------------------------------------------------------------
 
-Prettify.js is used in the documentation and not the in kensakan code 
+Prettify.js is used in the documentation and not in the kensakan code 
 itself. If you use jsdoc to generate the docs, its license would be included 
-automatically in its directory at docs/scripts/prettify and is licensed under
+automatically in its directory at docs/scripts/prettify and its license is
 Apache-2.0. 

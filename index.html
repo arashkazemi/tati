@@ -301,7 +301,7 @@ for(let j=0;
         code = editor.getValue();
       }
       else { // simple text input
-        code = ed.innerHTML.replace(/&lt;/gm, '<').replace(/&gt;/gm, '>');
+        code = ed.innerHTML.replace(/&nbsp;/gm, ' ').replace(/<br>/gm, '\n').replace(/&lt;/gm, '<').replace(/&gt;/gm, '>');
       }
 
       sd.innerHTML = "";

@@ -140,6 +140,8 @@ class Kensakan {
 
     this.error = null;
 
+    this.context = {};
+
     this.run_func = null;
     this.debug_func = null;
 
@@ -172,17 +174,20 @@ class Kensakan {
       this.error = e;
     }
 
-    this.run_func = eval("(async function() {" + escodegen.generate(this.esp) + "})");
+    let ctx = Object.keys(this.context).join(',');
+
+    this.run_func = eval(`(async function(${ctx}) { ${escodegen.generate(this.esp)} })`);
 
     this.asyncize(this.esp);
     this.kensakize(this.esp, ws);
-    this.debug_func = eval("(async function() {" + escodegen.generate(this.esp) + "})");
+
+    this.debug_func = eval(`(async function(${ctx}) { ${escodegen.generate(this.esp)} })`);
   };
 
 
   /**
    * Runs the prepared code as it is, **without** the debug codes. 
-   * The only ddifference is that it is asyncized anyway, so the flow of
+   * The only difference is that it is asyncized anyway, so the flow of
    * the two debug/release procedures would be the same.                
    */
 
@@ -190,7 +195,7 @@ class Kensakan {
   {
     if(this.run_func==null) return;
 
-    this.run_func().then( (function() {
+    this.run_func(...Object.values(this.context)).then( (function() {
 
       if(this.stop_callback!=null) {
         this.stop_callback();
@@ -215,8 +220,10 @@ class Kensakan {
   debug(run_to_breakpoint=false) 
   {
     if(this.debug_func==null) return;
+
     this.run_to_breakpoint = run_to_breakpoint;
-    this.debug_func().then( (function() {
+
+    this.debug_func(...Object.values(this.context)).then( (function() {
 
       if(this.stop_callback!=null) {
         this.stop_callback();
@@ -280,6 +287,25 @@ class Kensakan {
     this.breakpoints = {};
   }
 
+  /**
+   * Sets context variables. The members of the context object will be set
+   * as given in this object. This also can be used to mask global browser
+   * objects like document and window, i.e. 
+   * 
+   *     k.set_context({document: null, window: null});
+   * 
+   * This function should be called before prepare. But if the values of 
+   * context members are changed later, there is no need to call prepare
+   * again. You only should call prepare again if the keys of the context
+   * are changed later. You can also access context directly, i.e. 
+   * 
+   *     k.context.x = 1;
+   */
+
+  set_context(context) {
+    this.context = context;
+  }
+
 
   /* Internal functions */
 
@@ -319,6 +345,7 @@ class Kensakan {
           abi.type!="DoWhileStatement" ) {
 
           var el =  Kensakan.prototype.template_block(this.id, abi, ws);
+          if(typeof(el)==typeof(undefined)) continue;
 
           a.body.splice(i,0,el);
           i++;
