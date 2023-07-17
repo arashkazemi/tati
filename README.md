@@ -45,7 +45,7 @@ As a simple example Kensakan can be used like this:
 
         k.debug(true); // runs until reaching the breakpoint on line 2 
                        // (output:  1) 
-        k.continue();  // runs until end as there is no other breakpoints 
+        k.continue();  // runs until end as no breakpoint remains
                        // (output:  2,3)
 
 Kensakan is also able to set the script context. This can be used to setup

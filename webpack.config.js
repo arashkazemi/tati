@@ -39,9 +39,8 @@ module.exports = {
   output: {
     filename: 'kensakan.min.js',
     path: path.resolve(__dirname, 'dist'),
-    libraryExport: 'default',
     library: 'Kensakan',
-    libraryTarget: 'umd',
+    libraryTarget: 'var',
     globalObject: 'this'
   },
   plugins: [

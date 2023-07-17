@@ -76,7 +76,8 @@ class Kensakan {
   constructor(  step_callback=null, 
                 stop_callback=null, 
                 error_callback=null, 
-                step_loop_args=true ) 
+                step_loop_args=true,
+                use_worker=false ) 
   {
 
     /**
@@ -147,6 +148,12 @@ class Kensakan {
 
     this.__esprima__ = esprima;
     this.__escodegen__ = escodegen;
+
+    this.worker = null;
+        
+    if(use_worker) {
+      this.worker = new Worker
+    }
   }
 
   
@@ -697,6 +704,7 @@ Kensakan.prototype.template_inline = function(id,el,ws)
   return res;
 };
 
+
 Kensakan.prototype.error_proxy = function(err)
 {
   if(this.error_callback!=null) {
@@ -708,4 +716,4 @@ Kensakan.prototype.error_proxy = function(err)
   this.last_column=-1;
 }
 
-export default Kensakan;
+module.exports = Kensakan;
