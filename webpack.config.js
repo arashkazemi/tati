@@ -31,7 +31,7 @@ const path = require('path');
 const fs = require('fs');
 
 module.exports = {
-  entry: './src/index.js',
+  entry: './src/kensakan.js',
   mode: 'production',
   optimization: {
     //minimize: false,

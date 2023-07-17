@@ -1,10 +1,10 @@
 {
   "name": "kensakan",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "A Tool for Stepping Through Javascript Code without the Browser's Inspector",
   "repository": "github:arashkazemi/kensakan",
   "homepage": "https://arashkazemi.github.io/kensakan/",
-  "main": "dist/kensakan.min.js",
+  "main": "src/kensakan.js",
   "scripts": {
     "build": "webpack",
     "http": "http-server",
