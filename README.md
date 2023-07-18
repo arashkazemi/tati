@@ -34,6 +34,10 @@ To use in a webpage, first download the source code and extract it. The minified
 script itself is available in the `/dist` directory and the documentation 
 can be found in the `/docs` and also in the source files. 
 
+It is also available via unpkg CDN and can be included in HTML files using
+
+        <script src="https://unpkg.com/kensakan/dist/kensakan.min.js"></script>
+        
 As a simple example Kensakan can be used like this:
 
         var k = new Kensakan (
