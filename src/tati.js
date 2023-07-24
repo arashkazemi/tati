@@ -101,11 +101,18 @@ class Tati
 	* In case of runtime errors, if `error_callback` argument is given to the 
 	* constructor, Tati will call it. But it will not cancel the event or stop 
 	* its propagation so it doesn't interfere with any other code handling mechanism. 
-
+	* 
 	* @param {boolean} use_worker - If set, the debugger will run in a web worker, 
 	* much safer but communication with it will be limited so the context should be 
 	* plain object and the script won't be able to interact with any other object 
 	* (like DOM) directly.
+	* 
+	* @param {boolean} default_root - The `this` of the script being run. It is an empty 
+	* object {} by default. It is important because it masks the Tati object or the 
+	* worker that the script is being debugged in. If you want to set it to another 
+	* object this is the way, but note that if `use_worker` is set to true, it will not 
+	* work as expected because of the access limitations.
+	* 
 	*/
 
 
@@ -367,7 +374,7 @@ class Tati
 
 		pr.then( (function() {
 
-			if(this.stop_callback!=null) {
+			if(this.stop_callback!==null) {
 				this.stop_callback();
 			}
 
@@ -377,7 +384,7 @@ class Tati
 		}).bind(this) );
 
 		pr.catch( (function(e) {
-			if(this.error_callback!=null) {
+			if(this.error_callback!==null) {
 				Tati.__error_proxy__.bind(this)(e);
 			}
 			this.error = e;
