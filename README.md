@@ -8,7 +8,7 @@ Tati is a javascript library that makes it possible to debug, step,
 pause and watch local variables in javascript code without using the built-in
 runtime inspector. It can even step into the for loop test and update statements 
 or follow the execution inside try-catch blocks and arrow functions. Tati
-is even able run the code in a separate worker and debug it from the main
+is even able to run the code in a separate worker and debug it from the main
 thread.
 
 Tati is also able to define runtime context, mask global variables even
