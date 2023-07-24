@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+
+<!--
+	Tati
+	A Tool for Stepping in Javascript Code without the Inspector
+
+	Copyright (C) 2022-2023 Arash Kazemi <contact.arash.kazemi [at] gmail.com>
+
+	Redistribution and use in source and binary forms, with or without
+	modification, are permitted provided that the following conditions are met:
+
+		* Redistributions of source code must retain the above copyright
+			notice, this list of conditions and the following disclaimer.
+		* Redistributions in binary form must reproduce the above copyright
+			notice, this list of conditions and the following disclaimer in the
+			documentation and/or other materials provided with the distribution.
+
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+	AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+	IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+	ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+	DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+	(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+	ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+	(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+	THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>Dual Debugger - Tati</title>
+		<link href='https://fonts.googleapis.com/css?family=Quicksand' rel='stylesheet' type='text/css'>
+		<link href='https://fonts.googleapis.com/css?family=PT+Mono' rel='stylesheet' type='text/css'>
+
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha512-1sCRPdkRXhBV2PBLUdRb4tMg1w2YPf37qatUFeS7zlBy7jJI8Lf4VHwWfZZfpXtYSLy85pkm9GaYVYMfw5BC1A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+		<style>
+			body {
+				background: #e6e6e6;
+				text-align: center;
+				padding: 1rem 0;
+				color: #052154;
+				min-width: 1200px;
+				line-height: 1.5rem;
+			}
+			*:not(pre):not(pre *):not(#editor *):not(.fa) {
+				font-family: 'Quicksand', lucida sans, helvetica, verdana, sans;
+				font-size:  15px;
+			}
+			small {
+				font-size: 90% !important;
+			}
+			.fa {
+				margin:  0 .3rem;
+				display: inline-block;
+			}
+			#wrapper {
+				width: 100%;
+				margin: auto;
+			}
+			a {
+				background: #eee;
+				padding: 8px 10px;
+				border-radius: 4px;
+				text-decoration: none;
+				font-size: 13px !important;
+				box-shadow: 0 0 3px rgba(0,0,0,.05);
+			}
+			h2 a {
+				border: none;
+				box-shadow: none;
+				background: none;
+				font-family: 'Noto Nastaliq Urdu', IranNastaliq, sans;
+				font-size: 120% !important;
+				padding: initial;
+				color: #052154;
+			}
+
+			pre, pre *, #editor, #editor * {
+				font-family: 'PT Mono', monospace !important;
+				font-size: 13px !important;
+				font-weight: 400 !important;
+				letter-spacing: 0 !important;
+		 	}
+			pre, #editor {
+				max-width: 1000px;
+				background: #fff;
+				border-radius: .7rem;
+				padding: 1rem;
+				text-align: left;
+				box-shadow: 0 0 .5rem rgba(0,0,0,.05);
+				margin: 1rem auto;
+				overflow: auto;
+			}
+
+			button {
+				background: #fff;
+				border-radius: 2rem;
+				padding: 1rem 1.5rem 1rem 1.5rem;
+				border: none;
+				cursor: pointer;
+				box-shadow: 0 0 .5rem rgba(0,0,0,.2);
+				transform: scale(1);
+				transition: all .1s;
+				font-variant: small-caps;
+				margin: .5rem;
+			}
+			.donate-button {
+				transition: all .1s;
+				box-shadow: 0 0 .5rem rgba(0,0,0,.2);        
+				border-radius: .5rem;
+			}
+			button:active, .donate-button:active {
+				box-shadow: 0 0 .2rem rgba(0,0,0,.3);
+				transform: scale(.98) !important;
+			}
+			button:hover:not(:disabled), .donate-button:hover:not(:disabled) {
+				box-shadow: 0 0 .7rem rgba(0,0,0,.2);
+				transform: scale(1.01);
+			}
+			button:disabled {
+				opacity: .3;
+				box-shadow: 0 0 .2rem rgba(0,0,0,.1);
+			}
+
+			#editor-1, #editor-2, #result {
+				width: 520px;
+				height:  300px;
+				display: inline-block;
+			}
+			#result {
+				position: relative;
+				width: 1000px;
+				height:  15rem;
+			}
+			.ace_gutter-cell.ace_breakpoint {
+				position: absolute;
+				background: #0062fd;
+				color: #fff;
+			}
+
+			.running {
+				background: #41a2d887;
+				z-index: 0;
+				position: absolute;
+			}
+
+			hr {
+				opacity: .1;
+				height: 2px;
+			}
+
+			#no-ace-notice {
+				display: none;
+			}
+
+			#osc-box {
+				position: absolute;
+				top:calc(50% - 20px);
+				right: 200px;
+				width:200px;
+				height:40px;
+				background: #0001;
+			}
+			#osc {
+				position: absolute;
+				width:40px;
+				height:40px;
+				background: #994b98;
+				border-radius: 40px;
+			}
+		</style>
+	</head>
+	<body onload="on_load()">
+		<div id="wrapper">
+			<div id="code-stuff">
+				<h2><a href="../index.html">
+					<img src='tati.png' style='width:50px;height:50px;'><br>
+					Tati
+				</a></h2>
+				<div>
+					<a href="index.html">Documentation Home</a> |
+					<a href="Tati.html">Class Docs</a> |
+					<a href="https://github.com/arashkazemi/tati">Github</a> |
+					<a href="https://www.npmjs.com/package/tati">npm Package</a>
+					|||
+					<a href="simple.html">Simple Demo</a> |
+					<a href="worker.html">Worker Demo</a> |
+					<a href="dual.html">Dual Debuggers</a>
+
+					<hr style="width:66%;margin:1rem auto;">
+				</div>
+				<p id="ace-notice">
+					You can change the code, and also toggle breakpoints by clicking on the gutter.<br>
+					Use <b>Start</b> to begin debugging the code.<br>
+					Use <b>Step</b> for Stepping through and use <b>Continue</b> for going until 
+					the next breakpoint or end.<br>
+				</p>
+				<p id="no-ace-notice">
+					You can change the code, but toggling breakpoints and also highlighting 
+					the next line is deactivated because ace editor is not loaded (the row 
+					is written in the next step box).<br>
+					Use <b>Start</b> to begin debugging the code.<br>
+					Use <b>Step</b> for Stepping through and use <b>Continue</b> for going until 
+					the next breakpoint or end.<br>
+				</p>
+
+<pre id="editor-1" contenteditable
+>// Note that running will continue after script end, 
+// because of the timeout. It can be stopped by clearing 
+// the timeout. 
+
+// You can pause the execution to prevent setting a new 
+// timeout. You may also set a breakpoint in the timer 
+// callback function, it will be stopped upon reaching it, 
+// even after the script is ended. That is why the puase 
+// button is still enabled after the end.
+
+function addAlpha() {
+  alpha+=1;
+  updateOutput();
+
+  alpha_timeout = setTimeout( addAlpha, 10 );
+}
+
+clearTimeout(alpha_timeout);
+setTimeout( addAlpha, 10 );
+
+</pre>
+<pre id="editor-2" contenteditable
+>let dim = 1;
+
+function addBeta() {
+  beta+=dim;
+  updateOutput();
+
+  if(beta==160 || beta==0) {
+      dim=-dim;
+  }
+  beta_timeout = setTimeout( addBeta, 10 );
+}
+
+clearTimeout(beta_timeout);
+setTimeout( addBeta, 10 );
+
+
+</pre>
+			</div>
+							
+			<button onclick="start_run(1);"><span class="fa fa-play" aria-hidden="true"></span> Start</button>
+			<button id="step-button-1" onclick="step(1);" disabled><span class="fa fa-step-forward" aria-hidden="true"></span>Step</button>
+			<button id="continue-button-1" onclick="do_continue(1);" disabled><span class="fa far fa-play-circle" aria-hidden="true"></span>Continue</button>
+ 			<button id="pause-button-1" onclick="pause(1);"><span class="fa far fa-play-pause" aria-hidden="true"></span>Pause</button>
+|||
+
+
+			<button onclick="start_run(2);"><span class="fa fa-play" aria-hidden="true"></span> Start</button>
+			<button id="step-button-2" onclick="step(2);" disabled><span class="fa fa-step-forward" aria-hidden="true"></span>Step</button>
+			<button id="continue-button-2" onclick="do_continue(2);" disabled><span class="fa far fa-play-circle" aria-hidden="true"></span>Continue</button>
+			<button id="pause-button-2" onclick="pause(2);"><span class="fa far fa-play-pause" aria-hidden="true"></span>Pause</button>
+			<div id='outputs'>
+				<pre id="result">
+					<center>Hint: Start and then Continue both scripts to get what is going on, then play araound!</center>
+					<div id='osc-box'><div id='osc'></div></div></pre>
+			</div>				
+		</div>
+
+		<p>
+			And meanwhile, if you enjoy, please support this project by donating, Many Thanks!<br>
+
+			<a class="donate-button" style="background: #41a2d8 url(https://donorbox.org/images/red_logo.png) no-repeat 37px;color: #fff;text-decoration: none;display: inline-block;font-size: 16px;padding: 15px 38px;padding-left: 75px;text-shadow: 0 1px rgba(0, 0, 0, 0.3);margin-top:.5rem;" href="https://donorbox.org/tati?default_interval=o&amount=30">Donate</a>
+			<br><br>
+		</p>
+		<small>
+			Copyright (C) 2022-2023 Arash Kazemi &lt;contact.arash.kazemi@gmail.com&gt; <br>
+			<small>(Tati project is subject to the terms of BSD-2-Clause License, for more information see the LICENSE file in the root directory of the project)</small><br><br>
+		</small>
+		</pre>
+
+	</body>
+
+	<!-- 
+		This example uses ace.js editor, but in case ace is not loaded the example will 
+		continue to work without it, but you won't be able to toggle bookmarks and also 
+		the current line will only be written in text and not highlighted graphically.
+	-->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.9.5/ace.js" integrity="sha512-wju2wMXmukx2760GKQBjykvRNeRY8LdMn6XnMPJQKRF7olV229IytqfkW9Z83lrdCVA168r4Ut4paNoRxJWoag==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+
+	<script src="../dist/tati.min.js"></script>
+
+	<script>
+
+		var alpha = 0, beta = 0;
+		var alpha_timeout = 0;
+		var beta_timeout = 0;
+
+		var envs = {}
+
+		var res = document.getElementById("result");
+
+		document.getElementById("step-button-1").disabled = true;
+		document.getElementById("step-button-2").disabled = true;
+		document.getElementById("continue-button-1").disabled = true;
+		document.getElementById("continue-button-2").disabled = true;
+		document.getElementById("pause-button-1").disabled = true;
+		document.getElementById("pause-button-2").disabled = true;
+				
+
+		function start_run(index) 
+		{
+			let env = envs[index];			
+			var code;
+
+			if(typeof(ace)!='undefined') { // is ace.js present
+				code = env.editor.getValue();
+			}
+			else { // simple text input
+				code = document.getElementById("editor-"+index).innerHTML.replace(/&nbsp;/gm, ' ').replace(/<br>/gm, '\n').replace(/&lt;/gm, '<').replace(/&gt;/gm, '>');
+			}
+
+			res.innerHTML = "Print Output\n<hr>";
+
+			env.kensa.prepare(code);
+			env.kensa.debug();
+
+			document.getElementById("step-button-"+index).disabled = false;
+			document.getElementById("continue-button-"+index).disabled = false;
+			document.getElementById("pause-button-"+index).disabled = true;
+	
+		}
+
+		function configure_editor(index)
+		{
+
+			envs[index] = {msg:''};
+			let env = envs[index];
+
+			if(typeof(ace)!="undefined") {  // is ace.js present
+
+
+				env.editor = ace.edit("editor-"+index);
+
+				env.editor.index = index;
+				env.editor.session.setMode("ace/mode/javascript");
+
+				env.editor.on("guttermousedown", function(e) {
+						var target = e.domEvent.target; 
+						if (target.className.indexOf("ace_gutter-cell") == -1)
+								return; 
+						if (!e.editor.isFocused()) 
+								return;   
+						if (e.clientX > 35 + target.getBoundingClientRect().left) 
+								return; 
+
+						var breakpoints = e.editor.session.getBreakpoints(row, 0);
+						var row = e.getDocumentPosition().row;
+						if(typeof breakpoints[row] === typeof undefined)
+								e.editor.session.setBreakpoint(row);
+						else 
+								e.editor.session.clearBreakpoint(row);
+							e.stop();
+
+
+						// breakpoints should be in the form { 5: true, 10: true }
+
+						var breakpoints = {};
+						for(a in e.editor.session.getBreakpoints()) breakpoints[parseInt(a)+1]=true;
+
+						envs[e.editor.index].kensa.setAllBreakpoints(breakpoints);
+
+					});
+
+				env.editor.on("change", function(e) {
+					document.getElementById("step-button-"+this.index).disabled = true;
+					document.getElementById("continue-button-"+this.index).disabled = true;
+				}.bind(env.editor));
+			}
+
+			else { // simple text input
+				document.getElementById("ace-notice").style.display = "none";
+				document.getElementById("no-ace-notice").style.display = "block";
+
+				document.getElementById("editor-"+index).onkeydown = function(e) {
+					document.getElementById("step-button-"+index).disabled = true;
+					document.getElementById("continue-button-"+index).disabled = true;
+				};
+			}
+
+
+			if(typeof(ace)!="undefined") {
+				var rng = ace.require('ace/range').Range;
+				function addMarker(editor,start = 0,end = 0,classes ='running',line="fullLine",override = false) 
+				{
+					return editor.session.addMarker(
+							new rng(start, 0, (end === 0 ? start : end), 1), 
+							classes, line, override 
+						);
+				}
+			}
+
+			env.kensa = new Tati ( 
+				
+										function(r,c,ws) { // step function (row,column,watched variables)
+											envs[this.index].msg = "";
+											updateOutput();
+
+											document.getElementById("step-button-"+this.index).disabled = false;
+											document.getElementById("continue-button-"+this.index).disabled = false;
+											document.getElementById("pause-button-"+this.index).disabled = true;
+
+											let editor = envs[this.index].editor;
+											let marker = envs[this.index].marker;
+											if(typeof(ace)!='undefined') { // is ace.js present
+												editor.session.removeMarker(marker);
+												envs[this.index].marker = addMarker(editor,r-1,r-1);
+											}
+											return true; // tells to pause execution
+										},
+
+										function() {
+											envs[this.index].msg = "Script Ended!";
+											updateOutput();
+
+											if(typeof(ace)!='undefined') { // is ace.js present
+												envs[this.index].editor.session.removeMarker(envs[this.index].marker);
+											}
+
+											document.getElementById("step-button-"+this.index).disabled = true;
+											document.getElementById("continue-button-"+this.index).disabled = true;
+										},
+
+										function(r,c,error_type,error_desc) {
+											envs[this.index].msg = `Error on ${this.index}:  ${error_type.toUpperCase()} -> ${error_desc}`;
+											updateOutput();
+											document.getElementById("step-button-"+this.index).disabled = true;
+											document.getElementById("continue-button-"+this.index).disabled = true;
+										},
+
+										false
+
+									);
+			env.kensa.index = index;
+
+		}
+
+		function step(index)
+		{
+			document.getElementById("pause-button-"+index).disabled = false;
+			document.getElementById("step-button-"+index).disabled = true;
+			document.getElementById("continue-button-"+index).disabled = true;
+			setTimeout( ()=>{
+				envs[index].kensa.step();
+			},0);
+		}
+
+		function do_continue(index)
+		{
+			document.getElementById("pause-button-"+index).disabled = false;
+			document.getElementById("step-button-"+index).disabled = true;
+			document.getElementById("continue-button-"+index).disabled = true;
+			setTimeout( ()=>{
+				envs[index].kensa.continue();
+			},0);
+		}
+
+		function pause(index)
+		{
+			document.getElementById("pause-button-"+index).disabled = true;
+			setTimeout( ()=>{
+				envs[index].kensa.pause();
+			},0);
+		}
+
+
+
+		function updateOutput() {
+			res.innerHTML = `Script 1: Next Row ${envs[1].kensa.last_row} Next Col ${envs[1].kensa.last_row}\n`+							 
+							`Script 2: Next Row ${envs[2].kensa.last_row} Next Col ${envs[2].kensa.last_row}\n`+
+							 `<span style='color:#d00;'>${envs[1].msg}</span>\n`+
+							 `<span style='color:#d00;'>${envs[2].msg}</span>`+
+							 `<div id='osc-box'><div id='osc'></div></div>`;
+
+			document.getElementById('osc-box').style.transform = `rotate(${alpha}deg)`;
+			document.getElementById('osc').style.marginLeft = beta+'px';
+		}
+		function on_load() {
+			configure_editor(1);
+			configure_editor(2);
+		}
+	</script>
+
+</html>

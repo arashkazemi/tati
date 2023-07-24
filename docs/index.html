@@ -43,54 +43,77 @@
 
 
     <section>
-        <article><h2>Kensakan</h2>
-<h3>A Tool for Stepping Through Javascript Code without the Browser's Inspector</h3>
+        <article><h2>Tati</h2>
+<h3>A Javascript Debugger without Using the Built-in Runtime Inspector</h3>
 <hr>
-<p>Kensakan is a javascript library that makes it possible to debug, step,
-pause and watch local variables in javascript code without using browser's
-internal inspector. It works by restructuring and running the given code
-asynchronously. It can even step into the for loop test and update statements
-or follow the execution inside try-catch blocks and arrow functions.</p>
-<p>This can be used in online development environments, testing, debugging,
+<p>Tati is a javascript library that makes it possible to debug, step,
+pause and watch local variables in javascript code without using the built-in
+runtime inspector. It can even step into the for loop test and update statements
+or follow the execution inside try-catch blocks and arrow functions. Tati
+is even able run the code in a separate worker and debug it from the main
+thread.</p>
+<p>Tati is also able to define runtime context, mask global variables even
+globalThis, so the interaction between the debugged script and the environment
+can be controlled precisely.</p>
+<p>Debugging using Tati is different from using the internal inspector (and
+perhaps from any other debugger on the planet!) as the runtime isn't paused
+on breakpoints. So the code is basically running but a part of it is selectively
+stepped through, paused and analyzed.</p>
+<p>Another aspect of Tati is the possibility of having multiple debuggers
+running on different parts of the script, each having their own breakpoints,
+watches, and each may be paused separately. See the dual debugger example for
+more details.</p>
+<p>Tati can be used in debugging, testing, online development environments,
 and even education. The API is designed to make things as easy as possible
-while keeping it simple.</p>
+while keeping it powerful and flexible.</p>
 <hr>
-<p>You can see a demo of Kensakan at
-<a href="https://arashkazemi.github.io/kensakan/">https://arashkazemi.github.io/kensakan/</a></p>
-<p>The latest source code of Kensakan can be found at
-<a href="https://github.com/arashkazemi/kensakan">https://github.com/arashkazemi/kensakan</a></p>
-<p>To use in other node projects, install kensakan from npm public repository:</p>
-<pre><code>    npm install kensakan  
+<p>You can see a demo of Tati at
+<a href="https://arashkazemi.github.io/tati/">https://arashkazemi.github.io/tati/</a></p>
+<p>The latest source code of Tati can be found at
+<a href="https://github.com/arashkazemi/tati">https://github.com/arashkazemi/tati</a></p>
+<p>To use in other node projects, install tati from npm public repository:</p>
+<pre><code>    npm install tati  
 </code></pre>
 <p>and then in your javascript code:</p>
-<pre><code>    const Kensakan = require(&quot;kensakan&quot;);
+<pre><code>    const Tati = require(&quot;tati&quot;);
 </code></pre>
 <p>To use in a webpage, first download the source code and extract it. The minified
 script itself is available in the <code>/dist</code> directory and the documentation
 can be found in the <code>/docs</code> and also in the source files.</p>
-<p>As a simple example Kensakan can be used like this:</p>
-<pre><code>    var k = new Kensakan (
+<p>It is also available via unpkg CDN and can be included in HTML files using</p>
+<pre><code>    &lt;script src=&quot;https://unpkg.com/tati/dist/tati.min.js&quot;&gt;&lt;/script&gt;
+</code></pre>
+<p>As a simple example Tati can be used like this:</p>
+<pre><code>    var k = new Tati (
                             function(r,c,ws) {return true;}
                          );
 
-    k.prepare(&quot;console.log(1);\nconsole.log(2);\nconsole.log(3);\n&quot;);
-    k.set_breakpoint(2);
+    k.prepare(
+            `console.log(1);
+             console.log(2);
+             console.log(3);
+             console.log(4);
+             `);
+    k.setBreakpoint(2);
+    k.setBreakpoint(3);
 
     k.debug(true); // runs until reaching the breakpoint on line 2 
                    // (output:  1) 
-    k.continue();  // runs until end as there is no other breakpoints 
-                   // (output:  2,3)
+    k.continue();  // runs until reaching the breakpoint on line 3 
+                   // (output:  2) 
+    k.continue();  // runs until end as no breakpoint remains
+                   // (output:  3,4)
 </code></pre>
-<p>Kensakan is also able to set the script context. This can be used to setup
+<p>Tati is also able to set the script context. This can be used to setup
 environment or even mask global objects like <code>document</code> or <code>window</code>. For example
 calling</p>
-<pre><code>    k.set_context({document: null, window: null, foo: 123});
+<pre><code>    k.setContext({document: null, window: null, foo: 123});
 </code></pre>
 <p>before calling the <code>prepare</code> function will mask both <code>document</code> and <code>window</code>
 objects and also introduces a foo variable that can be accessed anywhere in
 the target script.</p>
-<p>To know more about using Kensakan, see the included example and the class
-documentation.</p>
+<p>To know more about using Tati, see the included example and the for the details
+see the class documentation.</p>
 <p>To build the project from scratch open a terminal in the root directory
 of the extracted files. Then to install the dependencies, run:</p>
 <pre><code>    npm install
@@ -106,10 +129,10 @@ running:</p>
 <pre><code>    npm run jsdoc
 </code></pre>
 <p>And meanwhile, if you enjoy please support this project by donating,
-Many Thanks! <a style="background: #41a2d8 url(https://donorbox.org/images/red_logo.png) no-repeat 37px;color: #fff;text-decoration: none;font-family: Verdana,sans-serif;display: inline-block;font-size: 16px;padding: 15px 38px;padding-left: 75px;-webkit-border-radius: 2px;-moz-border-radius: 2px;border-radius: 2px;box-shadow: 0 1px 0 0 #1f5a89;text-shadow: 0 1px rgba(0, 0, 0, 0.3);" href="https://donorbox.org/kensakan?default_interval=o&amount=30">Donate</a></p>
+Many Thanks! <a style="background: #41a2d8 url(https://donorbox.org/images/red_logo.png) no-repeat 37px;color: #fff;text-decoration: none;font-family: Verdana,sans-serif;display: inline-block;font-size: 16px;padding: 15px 38px;padding-left: 75px;-webkit-border-radius: 2px;-moz-border-radius: 2px;border-radius: 2px;box-shadow: 0 1px 0 0 #1f5a89;text-shadow: 0 1px rgba(0, 0, 0, 0.3);" href="https://donorbox.org/tati?default_interval=o&amount=30">Donate</a></p>
 <hr>
-<p>Copyright (C) 2022 Arash Kazemi <a href="mailto:contact.arash.kazemi@gmail.com">contact.arash.kazemi@gmail.com</a></p>
-<p>Kensakan project is subject to the terms of BSD-2-Clause License. See the <code>LICENSE</code> file for more details.</p></article>
+<p>Copyright (C) 2022-2023 Arash Kazemi <a href="mailto:contact.arash.kazemi@gmail.com">contact.arash.kazemi@gmail.com</a></p>
+<p>Tati project is subject to the terms of BSD-2-Clause License. See the <code>LICENSE</code> file for more details.</p></article>
     </section>
 
 
@@ -120,7 +143,7 @@ Many Thanks! <a style="background: #41a2d8 url(https://donorbox.org/images/red_l
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Kensakan.html">Kensakan</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Tati.html">Tati</a></li></ul>
 </nav>
 
 <br class="clear">

@@ -1,9 +1,9 @@
 /* 
 
-  Kensakan
-  A Tool for Stepping in Javascript Code without the Inspector
+  Tati
+  A Javascript Debugger without Using the Built-in Runtime Inspector
 
-  Copyright (C) 2022 Arash Kazemi <contact.arash.kazemi@gmail.com>
+  Copyright (C) 2022-2023 Arash Kazemi <contact.arash.kazemi@gmail.com>
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
@@ -31,15 +31,15 @@ const path = require('path');
 const fs = require('fs');
 
 module.exports = {
-  entry: './src/kensakan.js',
+  entry: './src/tati.js',
   mode: 'production',
   optimization: {
     //minimize: false,
   },
   output: {
-    filename: 'kensakan.min.js',
+    filename: 'tati.min.js',
     path: path.resolve(__dirname, 'dist'),
-    library: 'Kensakan',
+    library: 'Tati',
     libraryTarget: 'var',
     globalObject: 'this'
   },
@@ -47,10 +47,10 @@ module.exports = {
     {
       apply: (compiler) => {
         compiler.hooks.done.tap('license-plugin', (compilation) => {
-          fs.readFile('./dist/kensakan.min.js', 'utf8', function(err, jssc) {
+          fs.readFile('./dist/tati.min.js', 'utf8', function(err, jssc) {
             fs.readFile('./LICENSE', 'utf8', function(err, lsc) {
               let out=`/*\n${lsc}\n*/\n\n${jssc}\n`;
-              fs.writeFile('./dist/kensakan.min.js', out, {}, function(){}); 
+              fs.writeFile('./dist/tati.min.js', out, {}, function(){}); 
             });
           });
 

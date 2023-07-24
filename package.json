@@ -1,14 +1,14 @@
 {
-  "name": "kensakan",
-  "version": "1.2.2",
-  "description": "A Tool for Stepping Through Javascript Code without the Browser's Inspector",
-  "repository": "github:arashkazemi/kensakan",
-  "homepage": "https://arashkazemi.github.io/kensakan/",
-  "main": "src/kensakan.js",
+  "name": "tati",
+  "version": "2.0.0",
+  "description": "A Javascript Debugger without Using the Built-in Runtime Inspector",
+  "repository": "github:arashkazemi/tati",
+  "homepage": "https://arashkazemi.github.io/tati/",
+  "main": "src/tati.js",
   "scripts": {
     "build": "webpack",
     "http": "http-server",
-    "jsdoc": "jsdoc -c ./jsdoc.conf.json src/index.js"
+    "jsdoc": "jsdoc -c ./jsdoc.conf.json src/tati.js"
   },
   "keywords": [
     "javascript",
@@ -17,7 +17,8 @@
     "inspector",
     "watch",
     "breakpoint",
-    "run"
+    "run",
+    "workers"
   ],
   "author": {
     "name": "Arash Kazemi",

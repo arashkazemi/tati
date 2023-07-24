@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+
+<!--
+	Tati
+	A Tool for Stepping in Javascript Code without the Inspector
+
+	Copyright (C) 2022-2023 Arash Kazemi <contact.arash.kazemi [at] gmail.com>
+
+	Redistribution and use in source and binary forms, with or without
+	modification, are permitted provided that the following conditions are met:
+
+		* Redistributions of source code must retain the above copyright
+			notice, this list of conditions and the following disclaimer.
+		* Redistributions in binary form must reproduce the above copyright
+			notice, this list of conditions and the following disclaimer in the
+			documentation and/or other materials provided with the distribution.
+
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+	AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+	IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+	ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+	DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+	(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+	ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+	(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+	THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>Worker Demo - Tati</title>
+		<link href='https://fonts.googleapis.com/css?family=Quicksand' rel='stylesheet' type='text/css'>
+		<link href='https://fonts.googleapis.com/css?family=PT+Mono' rel='stylesheet' type='text/css'>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha512-1sCRPdkRXhBV2PBLUdRb4tMg1w2YPf37qatUFeS7zlBy7jJI8Lf4VHwWfZZfpXtYSLy85pkm9GaYVYMfw5BC1A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+		<style>
+			body {
+				background: #e6e6e6;
+				text-align: center;
+				padding: 2rem;
+				color: #052154;
+				line-height: 1.5rem;
+			}
+			*:not(pre):not(pre *):not(#editor *):not(.fa) {
+				font-family: 'Quicksand', lucida sans, helvetica, verdana, sans;
+				font-size:  15px;
+			}
+			small {
+				font-size: 90% !important;
+			}
+			.fa {
+				margin:  0 .3rem;
+				display: inline-block;
+			}
+			#wrapper {
+				width: 100%;
+				margin: auto;
+			}
+			a {
+				background: #eee;
+				padding: 8px 10px;
+				border-radius: 4px;
+				text-decoration: none;
+				font-size: 13px !important;
+				box-shadow: 0 0 3px rgba(0,0,0,.05);
+			}
+			h2 a {
+				border: none;
+				box-shadow: none;
+				background: none;
+				font-size: 120% !important;
+				padding: initial;
+				color: #052154;
+			}
+
+			pre, pre *, #editor, #editor * {
+				font-family: 'PT Mono', monospace;
+				font-size: 13px !important;
+				font-weight: 400 !important;
+				letter-spacing: 0 !important;
+				text-shadow: none;
+		 }
+			pre, #editor {
+				max-width: 1000px;
+				background: #fff;
+				border-radius: .7rem;
+				padding: 1rem;
+				text-align: left;
+				box-shadow: 0 0 .5rem rgba(0,0,0,.05);
+				margin: 2rem auto;
+				overflow: auto;
+			}
+
+			button {
+				background: #fff;
+				border-radius: 2rem;
+				padding: 1rem 1.5rem 1rem 1.5rem;
+				border: none;
+				cursor: pointer;
+				box-shadow: 0 0 .5rem rgba(0,0,0,.2);
+				transform: scale(1);
+				transition: all .1s;
+				font-variant: small-caps;
+				margin: .5rem;
+			}
+			.donate-button {
+				transition: all .1s;
+				box-shadow: 0 0 .5rem rgba(0,0,0,.2);        
+				border-radius: .5rem;
+			}
+			button:active, .donate-button:active {
+				box-shadow: 0 0 .2rem rgba(0,0,0,.3);
+				transform: scale(.98) !important;
+			}
+			button:hover:not(:disabled), .donate-button:hover:not(:disabled) {
+				box-shadow: 0 0 .7rem rgba(0,0,0,.2);
+				transform: scale(1.01);
+			}
+			button:disabled {
+				opacity: .3;
+				box-shadow: 0 0 .2rem rgba(0,0,0,.1);
+			}
+
+			#editor {
+				height:  15rem;
+			}
+			.ace_gutter-cell.ace_breakpoint {
+				position: absolute;
+				background: #0062fd;
+				color: #fff;
+			}
+
+			.running {
+				background: #41a2d887;
+				z-index: 0;
+				position: absolute;
+			}
+
+			hr {
+				opacity: .1;
+				height: 2px;
+			}
+
+			#no-ace-notice {
+				display: none;
+			}
+
+			@media screen and (min-width: 1024px) {
+				#code-stuff {
+					position: absolute;
+					top: 0;
+					left: 0;
+					right: 50%;
+					bottom: 0;
+					padding: 2rem;
+					overflow: auto;
+					border-right: 1px solid rgba(0,0,0,.05);
+					margin-right: 1px;
+				}
+				#outputs {
+					position: absolute;
+					top: 0;
+					right: 0;
+					left: 50%;
+					bottom: 0;
+					padding: 2rem;
+					overflow: auto;
+					border-left: 1px solid rgba(0,0,0,.05);
+				}
+			}
+
+			@media screen and (min-width: 1920px) {
+				#code-stuff {
+					top: 10%;
+					left: 20%;
+					right: 50%;
+				}
+				#outputs {
+					top: 10%;
+					right: 20%;
+					left: 50%;
+				}
+			}
+		</style>
+	</head>
+	<body onload="on_load()">
+		<div id="wrapper">
+			<div id="code-stuff">
+				<h2><a href="../index.html">
+					<img src='tati.png' style='width:50px;height:50px;'><br>
+					Tati
+				</a></h2>
+				<div>
+					A Javascript Debugger without Using the Built-in Runtime Inspector<br>
+					<small>- In Farsi "Tati" means "Toddle" -</small>
+					<hr style="width:50%;margin:1rem auto;">
+					<a href="index.html">Documentation Home</a> |
+					<a href="Tati.html">Class Docs</a> |
+					<a href="https://github.com/arashkazemi/tati">Github</a> |
+					<a href="https://www.npmjs.com/package/tati">npm Package</a>
+
+					<hr style="width:30%;margin:1rem auto;">
+
+					<a href="simple.html">Simple Demo</a> |
+					<a href="worker.html">Worker Demo</a> |
+					<a href="dual.html">Dual Debuggers</a>
+
+					<hr style="width:66%;margin:1rem auto;">
+				</div>
+				<p id="ace-notice">
+					You can change the code, and also toggle breakpoints by clicking on the gutter.<br>
+					Use <b>Start</b> to begin debugging the code.<br>
+					Use <b>Step</b> for Stepping through and use <b>Continue</b> for going until 
+					the next breakpoint or end.<br>
+				</p>
+				<p id="no-ace-notice">
+					You can change the code, but toggling breakpoints and also highlighting 
+					the next line is deactivated because ace editor is not loaded (the row 
+					is written in the next step box).<br>
+					Use <b>Start</b> to begin debugging the code.<br>
+					Use <b>Step</b> for Stepping through and use <b>Continue</b> for going until 
+					the next breakpoint or end.<br>
+				</p>
+
+<pre id="editor" contenteditable
+>function print(x) {
+	// Note that `reports` is defined as an array in the context, and
+	// is changed in the worker, but rendered in the main thread.
+	// See the class documentation for more (Tati.setContext).
+	// Also note that rendering the outputs will be done only on
+	// steps, breakpoints, and when paused, i.e. when the step_callback
+	// is called.
+
+	reports.push(x);
+}
+
+for(let j=0;
+				j<=100000;
+				j++) 
+{
+	if(j%10000==0)
+		print(j);
+}
+</pre>
+				<button onclick="start_run();"><span class="fa fa-play" aria-hidden="true"></span> Start</button>
+				<button id="step-button" onclick="step();" disabled><span class="fa fa-step-forward" aria-hidden="true"></span>Step</button>
+				<button id="continue-button" onclick="do_continue();" disabled><span class="fa far fa-play-circle" aria-hidden="true"></span>Continue</button>
+				<button id="pause-button" onclick="pause();" disabled><span class="fa fa-pause" aria-hidden="true"></span> Pause</button>
+			</div>
+			<div id='outputs'>
+				<pre id="step-data">Next Step<hr>Watched Variables<hr></pre>
+				<pre id="result">Print Output<hr></pre>
+				<p><small>
+					Non-JSON objects like <i>pre</i> in this example are printed as {} here, but in the 
+					callback you can access the object itself.<br>
+				</small></p>
+
+				<p>
+					And meanwhile, if you enjoy, please support this project by donating, Many Thanks!<br>
+
+					<a class="donate-button" style="background: #41a2d8 url(https://donorbox.org/images/red_logo.png) no-repeat 37px;color: #fff;text-decoration: none;display: inline-block;font-size: 16px;padding: 15px 38px;padding-left: 75px;text-shadow: 0 1px rgba(0, 0, 0, 0.3);margin-top:.5rem;" href="https://donorbox.org/tati?default_interval=o&amount=30">Donate</a>
+					<br><br>
+				</p>
+				<small>
+					Copyright (C) 2022-2023 Arash Kazemi &lt;contact.arash.kazemi@gmail.com&gt; <br>
+					<small>(Tati project is subject to the terms of BSD-2-Clause License, for more information see the LICENSE file in the root directory of the project)</small><br><br>
+				</small>
+				</pre>
+			</div>  
+		</div>
+	</body>
+
+	<!-- 
+		This example uses ace.js editor, but in case ace is not loaded the example will 
+		continue to work without it, but you won't be able to toggle bookmarks and also 
+		the current line will only be written in text and not highlighted graphically.
+	-->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.9.5/ace.js" integrity="sha512-wju2wMXmukx2760GKQBjykvRNeRY8LdMn6XnMPJQKRF7olV229IytqfkW9Z83lrdCVA168r4Ut4paNoRxJWoag==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+
+	<script src="../dist/tati.min.js"></script>
+
+	<script>
+		var editor, marker;
+
+		var pre = document.getElementById("result");
+		var sd = document.getElementById("step-data");
+		var ed = document.getElementById("editor");
+
+		document.getElementById("step-button").disabled = true;
+		document.getElementById("continue-button").disabled = true;
+		document.getElementById("pause-button").disabled = true;
+				
+		var kensa = new Tati ( 
+			
+								function(r,c,ws) { // step function (row,column,watched variables)
+									pre.innerHTML = kensa.getContextValue('reports').join('\n');
+
+									document.getElementById("pause-button").disabled = true;
+									document.getElementById("step-button").disabled = false;
+									document.getElementById("continue-button").disabled = false;
+
+									sd.innerHTML="Next Step<hr>Row : " + r + "  Column: "+  c+"\n\n";
+									sd.innerHTML+="Watched Variables<hr>" +  JSON.stringify(ws);
+
+									if(typeof(ace)!='undefined') { // is ace.js present
+										editor.session.removeMarker(marker);
+										marker = addMarker(r-1,r-1);
+									}
+									return true; // tells to pause execution
+								},
+
+								function() {
+									sd.innerHTML+=("\nSCRIPT ENDED."+"\n");
+									pre.innerHTML = kensa.getContextValue('reports').join('\n');
+
+									if(typeof(ace)!='undefined') { // is ace.js present
+										editor.session.removeMarker(marker);
+									}
+
+									document.getElementById("step-button").disabled = true;
+									document.getElementById("continue-button").disabled = true;
+								},
+
+								function(r,c,error_type,error_desc) {
+									let tp = error_type.toUpperCase() + " ERROR";
+									sd.innerHTML = `<div style='color:#d00'>${tp}<br>Row: ${r}, Column: ${c}<br>${error_desc}</div>`;
+								},
+
+								true
+
+							);
+
+		kensa.setContext({reports:[]});
+
+		function start_run() 
+		{
+			var code;
+
+			if(typeof(ace)!='undefined') { // is ace.js present
+				code = editor.getValue();
+			}
+			else { // simple text input
+				code = ed.innerHTML.replace(/&nbsp;/gm, ' ').replace(/<br>/gm, '\n').replace(/&lt;/gm, '<').replace(/&gt;/gm, '>');
+			}
+
+			sd.innerHTML = "";
+			pre.innerHTML = "Print Output\n<hr>";
+
+			kensa.prepare(code);
+			kensa.debug();
+
+			document.getElementById("step-button").disabled = false;
+			document.getElementById("continue-button").disabled = false;
+	
+		}
+
+		function step()
+		{
+			document.getElementById("pause-button").disabled = false;
+			document.getElementById("step-button").disabled = true;
+			document.getElementById("continue-button").disabled = true;
+			setTimeout( ()=>{
+				kensa.step();
+			},0);
+		}
+
+		function do_continue()
+		{
+			document.getElementById("pause-button").disabled = false;
+			document.getElementById("step-button").disabled = true;
+			document.getElementById("continue-button").disabled = true;
+			setTimeout( ()=>{
+				kensa.continue();
+			},0);
+		}
+
+		function pause()
+		{
+			document.getElementById("pause-button").disabled = true;
+			setTimeout( ()=>{
+				kensa.pause();
+			},0);
+		}
+
+
+		function on_load()
+		{
+			if(typeof(ace)!="undefined") {  // is ace.js present
+
+				editor = ace.edit("editor");
+				editor.session.setMode("ace/mode/javascript");
+
+				editor.on("guttermousedown", function(e) {
+						var target = e.domEvent.target; 
+						if (target.className.indexOf("ace_gutter-cell") == -1)
+								return; 
+						if (!editor.isFocused()) 
+								return;   
+						if (e.clientX > 35 + target.getBoundingClientRect().left) 
+								return; 
+
+						var breakpoints = e.editor.session.getBreakpoints(row, 0);
+						var row = e.getDocumentPosition().row;
+						if(typeof breakpoints[row] === typeof undefined)
+								e.editor.session.setBreakpoint(row);
+						else 
+								e.editor.session.clearBreakpoint(row);
+							e.stop();
+
+
+						// breakpoints should be in the form { 5: true, 10: true }
+
+						var breakpoints = {};
+						for(a in editor.session.getBreakpoints()) breakpoints[parseInt(a)+1]=true;
+
+						kensa.setAllBreakpoints(breakpoints);
+
+					});
+
+				editor.on("change", function(e) {
+					document.getElementById("step-button").disabled = true;
+					document.getElementById("continue-button").disabled = true;
+				});
+			}
+
+			else { // simple text input
+				document.getElementById("ace-notice").style.display = "none";
+				document.getElementById("no-ace-notice").style.display = "block";
+				ed.onkeydown = function(e) {
+					document.getElementById("step-button").disabled = true;
+					document.getElementById("continue-button").disabled = true;
+				};
+			}
+		}
+
+		if(typeof(ace)!="undefined") {
+			var rng = ace.require('ace/range').Range;
+			function addMarker(start = 0,end = 0,classes ='running',line="fullLine",override = false) 
+			{
+				return editor.session.addMarker(
+						new rng(start, 0, (end === 0 ? start : end), 1), 
+						classes, line, override 
+					);
+			}
+		}
+	</script>
+
+</html>
