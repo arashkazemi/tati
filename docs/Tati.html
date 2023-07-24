@@ -1084,7 +1084,7 @@ until reaching a breakpoint. If false, it will step line by line.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line707">line 707</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line717">line 717</a>
     </li></ul></dd>
     
 
@@ -1176,7 +1176,7 @@ plain objects. See also <a href="Tati.html#getWorkerContext">Tati#getWorkerConte
             <td class="type">
             
                 
-<span class="param-type">integer</span>
+<span class="param-type">string</span>
 
 
             
@@ -1186,8 +1186,7 @@ plain objects. See also <a href="Tati.html#getWorkerContext">Tati#getWorkerConte
 
             
 
-            <td class="description last"><p>The variable name.
-the process.</p></td>
+            <td class="description last"><p>The variable name.</p></td>
         </tr>
 
     
@@ -1228,7 +1227,7 @@ the process.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line698">line 698</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line708">line 708</a>
     </li></ul></dd>
     
 
@@ -1324,7 +1323,7 @@ with an await directive.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line728">line 728</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line738">line 738</a>
     </li></ul></dd>
     
 
@@ -2037,7 +2036,7 @@ and the breakpoint is only set if the value is exactly true.</p>
     
 
     
-    <h4 class="name" id="setContext"><span class="type-signature">(async) </span>setContext<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="setContext"><span class="type-signature">(async) </span>setContext<span class="signature">(context, masked)</span><span class="type-signature"></span></h4>
     
 
     
@@ -2078,6 +2077,80 @@ sure the context is set accordingly.</p>
 
 
 
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>context</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The new context object. If <code>use_worker</code> is
+set, it will be cloned to a plain object.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>masked</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The list of the objects and variables to be
+masked to <code>undefined</code>.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
 
 
 
@@ -2111,7 +2184,7 @@ sure the context is set accordingly.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line638">line 638</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line644">line 644</a>
     </li></ul></dd>
     
 
@@ -2147,7 +2220,7 @@ sure the context is set accordingly.</p>
     
 
     
-    <h4 class="name" id="setContextVariable"><span class="type-signature">(async) </span>setContextVariable<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="setContextVariable"><span class="type-signature">(async) </span>setContextVariable<span class="signature">(varname, value)</span><span class="type-signature"></span></h4>
     
 
     
@@ -2169,6 +2242,79 @@ sure the context is set accordingly.</p>
 
 
 
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>varname</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The variable name.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">any</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The new value. If <code>use_worker</code> is set, it will
+be cloned to a plain object.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
 
 
 
@@ -2204,7 +2350,7 @@ sure the context is set accordingly.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line673">line 673</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line684">line 684</a>
     </li></ul></dd>
     
 

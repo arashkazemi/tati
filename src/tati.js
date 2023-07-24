@@ -633,6 +633,12 @@ class Tati
 	* 
 	* This function is asynchronous, so you may want to use await to make
 	* sure the context is set accordingly.
+	* 
+	* @param {object} context The new context object. If `use_worker` is 
+	* set, it will be cloned to a plain object.
+	*
+	* @param {Array} masked The list of the objects and variables to be 
+	* masked to `undefined`.
 	*/
 
 	async setContext(context, masked) 
@@ -668,6 +674,11 @@ class Tati
 	* 
 	* This function is asynchronous, so you may want to use await to make
 	* sure the context is set accordingly.
+	* 
+	* @param {string} varname The variable name.
+	*
+	* @param {any} value The new value. If `use_worker` is set, it will
+	* be cloned to a plain object.
 	*/
 
 	async setContextVariable(varname, value) 
@@ -691,8 +702,7 @@ class Tati
 	* that a cloning will be applied and the results will only contain
 	* plain objects. See also {@link Tati#getWorkerContext} 
 	* 
-	* @param {integer} varname The variable name.
-	* the process.
+	* @param {string} varname The variable name.
 	*/
 
 	getContextValue(varname) 
