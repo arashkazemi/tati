@@ -259,7 +259,7 @@ plain object and the script won't be able to interact with any other object
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line110">line 110</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line112">line 112</a>
     </li></ul></dd>
     
 
@@ -367,7 +367,7 @@ plain object and the script won't be able to interact with any other object
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line577">line 577</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line586">line 586</a>
     </li></ul></dd>
     
 
@@ -455,7 +455,7 @@ plain object and the script won't be able to interact with any other object
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line563">line 563</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line572">line 572</a>
     </li></ul></dd>
     
 
@@ -621,7 +621,7 @@ the process.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line522">line 522</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line531">line 531</a>
     </li></ul></dd>
     
 
@@ -768,7 +768,7 @@ reaching a breakpoint.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line466">line 466</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line472">line 472</a>
     </li></ul></dd>
     
 
@@ -916,7 +916,7 @@ until reaching a breakpoint. If false, it will step line by line.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line393">line 393</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line397">line 397</a>
     </li></ul></dd>
     
 
@@ -1004,7 +1004,7 @@ until reaching a breakpoint. If false, it will step line by line.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line683">line 683</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line692">line 692</a>
     </li></ul></dd>
     
 
@@ -1098,7 +1098,7 @@ plain objects. See also <a href="Tati.html#getWorkerContext">Tati#getWorkerConte
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line674">line 674</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line683">line 683</a>
     </li></ul></dd>
     
 
@@ -1194,7 +1194,7 @@ with an await directive.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line704">line 704</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line713">line 713</a>
     </li></ul></dd>
     
 
@@ -1239,10 +1239,12 @@ with an await directive.</p>
 
 <div class="description">
     <p>Pauses the script. When the script is running an intensive loop or process,
-checking for pause command will be done in intervals, which can be configure
-using Tati@configureUIRefreshRate. When an script with a timeout or
-interval is being debugged but no breakpoint is set, pause will be applied
-on the next callback, i.e. the timer won't be interrupted before the callback.</p>
+checking for pause command will be done in intervals, which can be configured
+using Tati@configureUIRefreshRate.</p>
+<p>When an script with a timeout or interval is being debugged but no breakpoint
+is set, pause will be applied on the next callback, Tati will prevent timer
+callback execution, but it doesn't stop the runtime event loop, so they will
+expire as defined.</p>
 <p>Also note that Tati can only pause inside the given script and cannot
 enter the called functions that are defined elsewhere, i.e. native functions
 or external libraries.</p>
@@ -1346,7 +1348,7 @@ or external libraries.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line496">line 496</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line505">line 505</a>
     </li></ul></dd>
     
 
@@ -1552,7 +1554,7 @@ loop test and update expressions, like <code>i&lt;n</code> and <code>i++</code> 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line291">line 291</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line293">line 293</a>
     </li></ul></dd>
     
 
@@ -1642,7 +1644,7 @@ the environment of the two debug/release procedures would be the same.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line348">line 348</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line352">line 352</a>
     </li></ul></dd>
     
 
@@ -1732,7 +1734,7 @@ and the breakpoint is only set if the value is exactly true.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line549">line 549</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line558">line 558</a>
     </li></ul></dd>
     
 
@@ -1820,7 +1822,7 @@ and the breakpoint is only set if the value is exactly true.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line533">line 533</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line542">line 542</a>
     </li></ul></dd>
     
 
@@ -1930,7 +1932,7 @@ sure the context is set accordingly.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line617">line 617</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line626">line 626</a>
     </li></ul></dd>
     
 
@@ -2023,7 +2025,7 @@ sure the context is set accordingly.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line652">line 652</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line661">line 661</a>
     </li></ul></dd>
     
 
@@ -2175,7 +2177,7 @@ if the user needs to check the new context values, they should call
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line443">line 443</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line448">line 448</a>
     </li></ul></dd>
     
 

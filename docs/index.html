@@ -56,9 +56,9 @@ thread.</p>
 globalThis, so the interaction between the debugged script and the environment
 can be controlled precisely.</p>
 <p>Debugging using Tati is different from using the internal inspector (and
-perhaps from any other debugger on the planet!) as the runtime isn't paused
-on breakpoints. So the code is basically running but a part of it is selectively
-stepped through, paused and analyzed.</p>
+perhaps from any other debugger on the planet!), as with Tati the runtime isn't
+paused on breakpoints. So the code is basically running but a part of it is
+selectively stepped through, paused and analyzed.</p>
 <p>Another aspect of Tati is the possibility of having multiple debuggers
 running on different parts of the script, each having their own breakpoints,
 watches, and each may be paused separately. See the dual debugger example for
@@ -84,30 +84,30 @@ can be found in the <code>/docs</code> and also in the source files.</p>
 <pre><code>    &lt;script src=&quot;https://unpkg.com/tati/dist/tati.min.js&quot;&gt;&lt;/script&gt;
 </code></pre>
 <p>As a simple example Tati can be used like this:</p>
-<pre><code>    var k = new Tati (
+<pre><code>    var t = new Tati (
                             function(r,c,ws) {return true;}
                          );
 
-    k.prepare(
+    t.prepare(
             `console.log(1);
              console.log(2);
              console.log(3);
              console.log(4);
              `);
-    k.setBreakpoint(2);
-    k.setBreakpoint(3);
+    t.setBreakpoint(2);
+    t.setBreakpoint(3);
 
-    k.debug(true); // runs until reaching the breakpoint on line 2 
+    t.debug(true); // runs until reaching the breakpoint on line 2 
                    // (output:  1) 
-    k.continue();  // runs until reaching the breakpoint on line 3 
+    t.continue();  // runs until reaching the breakpoint on line 3 
                    // (output:  2) 
-    k.continue();  // runs until end as no breakpoint remains
+    t.continue();  // runs until end as no breakpoint remains
                    // (output:  3,4)
 </code></pre>
 <p>Tati is also able to set the script context. This can be used to setup
 environment or even mask global objects like <code>document</code> or <code>window</code>. For example
 calling</p>
-<pre><code>    k.setContext({document: null, window: null, foo: 123});
+<pre><code>    t.setContext({document: null, window: null, foo: 123});
 </code></pre>
 <p>before calling the <code>prepare</code> function will mask both <code>document</code> and <code>window</code>
 objects and also introduces a foo variable that can be accessed anywhere in
@@ -128,8 +128,6 @@ running:</p>
 <p>And to regenerate the documentation pages run:</p>
 <pre><code>    npm run jsdoc
 </code></pre>
-<p>And meanwhile, if you enjoy please support this project by donating,
-Many Thanks! <a style="background: #41a2d8 url(https://donorbox.org/images/red_logo.png) no-repeat 37px;color: #fff;text-decoration: none;font-family: Verdana,sans-serif;display: inline-block;font-size: 16px;padding: 15px 38px;padding-left: 75px;-webkit-border-radius: 2px;-moz-border-radius: 2px;border-radius: 2px;box-shadow: 0 1px 0 0 #1f5a89;text-shadow: 0 1px rgba(0, 0, 0, 0.3);" href="https://donorbox.org/tati?default_interval=o&amount=30">Donate</a></p>
 <hr>
 <p>Copyright (C) 2022-2023 Arash Kazemi <a href="mailto:contact.arash.kazemi@gmail.com">contact.arash.kazemi@gmail.com</a></p>
 <p>Tati project is subject to the terms of BSD-2-Clause License. See the <code>LICENSE</code> file for more details.</p></article>

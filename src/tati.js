@@ -66,6 +66,8 @@ class Tati
 	__get_worker_context_on_next_step__ = true;
 
 	#ui_refresh_counter = 0;
+	#prepare_index = 0;
+
 
 	/**
 	* Creates an instance of Tati.
@@ -138,12 +140,12 @@ class Tati
 				self.__tati_space__.resolver = null;
 
 				self.__tati_space__.step_callback = async function(r,c,vals) {
-					if(self.__tati_space__.kensa.__get_worker_context_on_next_step__) {
+					if(self.__tati_space__.tati.__get_worker_context_on_next_step__) {
 						self.postMessage( 
 											{
 												ev:'step',r:r,c:c,vs:{...vals}, 
 												ctx:self.__tati_space__.Tati.__recursive_clone__
-																(self.__tati_space__.kensa.__get_w_context__())
+																(self.__tati_space__.tati.__get_w_context__())
 											} 
 										);
 					}
@@ -157,12 +159,12 @@ class Tati
 				}
 
 				self.__tati_space__.stop_callback = function() {
-					if(self.__tati_space__.kensa.__get_worker_context_on_next_step__) {
+					if(self.__tati_space__.tati.__get_worker_context_on_next_step__) {
 						self.postMessage( 
 											{
 												ev:'stop',
 												ctx:self.__tati_space__.Tati.__recursive_clone__
-																(self.__tati_space__.kensa.__get_w_context__())
+																(self.__tati_space__.tati.__get_w_context__())
 											} 
 										);
 					}
@@ -176,27 +178,27 @@ class Tati
 				}
 
 
-				self.__tati_space__.kensa = null;
+				self.__tati_space__.tati = null;
 
 				self.onmessage = async function(e) {
 
-					if(self.__tati_space__.kensa===null) {
+					if(self.__tati_space__.tati===null) {
 						eval(e.data+";self.__tati_space__.Tati = Tati;");
 
 						var Tati = self.__tati_space__.Tati; 
 
-						self.__tati_space__.kensa = new Tati(self.__tati_space__.step_callback, self.__tati_space__.stop_callback, self.__tati_space__.error_callback);
-						self.__tati_space__.onerror = self.__tati_space__.Tati.__error_proxy__.bind(self.__tati_space__.kensa);
+						self.__tati_space__.tati = new Tati(self.__tati_space__.step_callback, self.__tati_space__.stop_callback, self.__tati_space__.error_callback);
+						self.__tati_space__.onerror = self.__tati_space__.Tati.__error_proxy__.bind(self.__tati_space__.tati);
 					}
 					else {
 						var Tati = self.__tati_space__.Tati; 
 
 						if(e.data.func==="set-funcs") {
 							if(e.data.args===null) {
-								self.__tati_space__.kensa.__set_worker_funcs__(null,null);
+								self.__tati_space__.tati.__set_worker_funcs__(null,null);
 							}
 							else {
-								self.__tati_space__.kensa.__set_worker_funcs__(
+								self.__tati_space__.tati.__set_worker_funcs__(
 													eval("("+e.data.args[0]+")"),
 													eval("("+e.data.args[1]+")")
 												);
@@ -206,10 +208,10 @@ class Tati
 							self.__tati_space__.resolver(e.data.args[0]);
 						}
 						else if(e.data.func==="getWorkerContext") {
-							self.postMessage( { ev:'context', 'ctx': await self.__tati_space__.kensa.__get_w_context__() } );
+							self.postMessage( { ev:'context', 'ctx': await self.__tati_space__.tati.__get_w_context__() } );
 						}
 						else {
-							self.__tati_space__.kensa[e.data.func](...e.data.args);
+							self.__tati_space__.tati[e.data.func](...e.data.args);
 							if(e.data.func==="set_worker_context") {
 								self.postMessage( { ev:'set-context' } );
 							}
@@ -253,7 +255,7 @@ class Tati
 			this.#worker.postMessage(Tati.toString());
 		}
 
-		if(Tati.__is_browser__()) {
+		if(this.#__is_browser__()) {
 			window.addEventListener("unhandledrejection", perr);
 		}
 		else if(Tati.__is_worker__()) {
@@ -290,6 +292,8 @@ class Tati
 
 	prepare( code, watch_locals=true, step_loop_args=true ) 
 	{
+		this.#prepare_index++;
+
 		this.#step_loop_args = step_loop_args;
 
 		var ws = watch_locals ? [[]] : null;
@@ -324,7 +328,7 @@ class Tati
 		this.#run_func = eval(`(async function(${ctx}) { ${escodegen.generate(this.#esp)} })`);
 
 		this.#asyncize(this.#esp);
-		this.#kensakize(this.#esp, ws);
+		this.#tatize(this.#esp, ws);
 
 		this.#debug_func = eval(`(async function(${ctx}) { ${escodegen.generate(this.#esp)} })`);
 
@@ -356,8 +360,8 @@ class Tati
 		if(this.#run_func==null) return;
 
 		let pr = this.#run_func(
-							this.#__template_watch_args__.bind(this),
-							this.#__template_no_watch_args__.bind(this),
+							this.#__template_watch_args__.bind(this,this.#prepare_index),
+							this.#__template_no_watch_args__.bind(this,this.#prepare_index),
 							...Object.values(this.#context))
 
 		pr.then( (function() {
@@ -402,8 +406,8 @@ class Tati
 		this.#run_to_breakpoint = run_to_breakpoint;
 
 		let pr = this.#debug_func(
-							this.#__template_watch_args__.bind(this),
-							this.#__template_no_watch_args__.bind(this),
+							this.#__template_watch_args__.bind(this,this.#prepare_index),
+							this.#__template_no_watch_args__.bind(this,this.#prepare_index),
 							...Object.values(this.#context));
 
 		pr.then( (function() {
@@ -426,6 +430,7 @@ class Tati
 		}).bind(this) );
 
 	}
+
 
 	/**
 	* Steps to the next line/expression.
@@ -455,6 +460,7 @@ class Tati
 		}
 	}
 
+
 	/**
 	* Runs to the next breakpoint or end.
 	* It will call the `step_callback` that was given to constructor on 
@@ -481,10 +487,13 @@ class Tati
 
 	/**
 	* Pauses the script. When the script is running an intensive loop or process, 
-	* checking for pause command will be done in intervals, which can be configure 
-	* using {@link Tati@configureUIRefreshRate}. When an script with a timeout or
-	* interval is being debugged but no breakpoint is set, pause will be applied 
-	* on the next callback, i.e. the timer won't be interrupted before the callback.
+	* checking for pause command will be done in intervals, which can be configured
+	* using {@link Tati@configureUIRefreshRate}. 
+	* 
+	* When an script with a timeout or interval is being debugged but no breakpoint 
+	* is set, pause will be applied on the next callback, Tati will prevent timer
+	* callback execution, but it doesn't stop the runtime event loop, so they will
+	* expire as defined.
 	* 
 	* Also note that Tati can only pause inside the given script and cannot 
 	* enter the called functions that are defined elsewhere, i.e. native functions 
@@ -716,6 +725,7 @@ class Tati
 
 	// For internal use
 
+
 	__set_worker_funcs__(run_func, debug_func) 
 	{
 		if(Tati.__is_worker__()) {
@@ -734,9 +744,11 @@ class Tati
 		}
 	}
 
+	#__is_browser__ = new Function("try {return this===window;}catch(e){ return false;}").bind(undefined);
+
 	#wrap(a, ws) 
 	{
-		this.#kensakize( a, ws );
+		this.#tatize( a, ws );
 
 		if(a.type!="BlockStatement" && a.type!="CatchClause") {
 			var el = {
@@ -750,7 +762,7 @@ class Tati
 		return a;
 	};
 
-	#kensakize(a,ws) 
+	#tatize(a,ws) 
 	{
 		if( a==null ) return null;
 		if( typeof(a.type)=="undefined" ) return;
@@ -776,13 +788,13 @@ class Tati
 					i++;
 				}
 
-				this.#kensakize( abi, ws );
+				this.#tatize( abi, ws );
 			}
 		}
 		else if(a.type=="ForStatement") {
 			if(this.#step_loop_args) {
 
-				this.#kensakize(a.init, ws);
+				this.#tatize(a.init, ws);
 				a.test = this.#template_inline(a.test, ws);
 				a.update = this.#template_inline(a.update, ws);
 			}
@@ -844,13 +856,13 @@ class Tati
 						j++;
 					}
 
-					this.#kensakize( c[j], ws );
+					this.#tatize( c[j], ws );
 				}
 			}
 		}
 		else if(a.type=="VariableDeclaration") {
 			for(var j=0; j<a.declarations.length; j++) {
-				this.#kensakize( a.declarations[j], ws );
+				this.#tatize( a.declarations[j], ws );
 			}
 		}
 		else {
@@ -862,11 +874,11 @@ class Tati
 			for(let i in a) {
 				if( Array.isArray(a[i]) ) {
 					for(let j in a[i]) {
-						this.#kensakize( a[i][j], ws );
+						this.#tatize( a[i][j], ws );
 					}
 				}
 				else {
-					this.#kensakize( a[i], ws );
+					this.#tatize( a[i], ws );
 				}
 			}
 		}
@@ -1025,8 +1037,10 @@ class Tati
 	};
 
 
-	async #__template_watch_args__(r,c) 
+	async #__template_watch_args__(pid, r,c) 
 	{
+		if(pid!==this.#prepare_index) return new Promise( function(res,rej) {} );
+
 		const self = this;
 
 		c++;
@@ -1046,7 +1060,7 @@ class Tati
 
 				let vals={};
 
-				for(let i=2;i<arguments.length;i+=2) {
+				for(let i=4;i<arguments.length;i+=2) {
 					if(arguments[i+1]==undefined) {
 						vals[arguments[i]]=undefined;
 					}
@@ -1068,7 +1082,7 @@ class Tati
 		else {
 			let vals={};
 
-					for(let i=2;i<arguments.length;i+=2) {
+					for(let i=4;i<arguments.length;i+=2) {
 						if(arguments[i+1]==undefined) {
 							vals[arguments[i]]=undefined;
 						}
@@ -1088,8 +1102,10 @@ class Tati
 		return true;
 	}
 
-	async #__template_no_watch_args__(r,c) 
+	async #__template_no_watch_args__(pid, r,c) 
 	{
+		if(pid!==this.#prepare_index) return new Promise( function(res,rej) {} );
+
 		const self = this;
 
 		c++;
@@ -1146,9 +1162,6 @@ class Tati
 		this.last_row=-1;
 		this.last_column=-1;
 	}
-
-
-	static __is_browser__ = new Function("try {return this===window;}catch(e){ return false;}").bind(undefined);
 
 	static __is_worker__()
 	{

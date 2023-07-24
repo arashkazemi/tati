@@ -256,12 +256,12 @@ for(let j=0;
 					callback you can access the object itself.<br>
 				</small></p>
 
-				<p>
+				<!--p>
 					And meanwhile, if you enjoy, please support this project by donating, Many Thanks!<br>
 
 					<a class="donate-button" style="background: #41a2d8 url(https://donorbox.org/images/red_logo.png) no-repeat 37px;color: #fff;text-decoration: none;display: inline-block;font-size: 16px;padding: 15px 38px;padding-left: 75px;text-shadow: 0 1px rgba(0, 0, 0, 0.3);margin-top:.5rem;" href="https://donorbox.org/tati?default_interval=o&amount=30">Donate</a>
 					<br><br>
-				</p>
+				</p-->
 				<small>
 					Copyright (C) 2022-2023 Arash Kazemi &lt;contact.arash.kazemi@gmail.com&gt; <br>
 					<small>(Tati project is subject to the terms of BSD-2-Clause License, for more information see the LICENSE file in the root directory of the project)</small><br><br>
@@ -292,10 +292,10 @@ for(let j=0;
 		document.getElementById("continue-button").disabled = true;
 		document.getElementById("pause-button").disabled = true;
 				
-		var kensa = new Tati ( 
+		var tati = new Tati ( 
 			
 								function(r,c,ws) { // step function (row,column,watched variables)
-									pre.innerHTML = kensa.getContextValue('reports').join('\n');
+									pre.innerHTML = tati.getContextValue('reports').join('\n');
 
 									document.getElementById("pause-button").disabled = true;
 									document.getElementById("step-button").disabled = false;
@@ -313,7 +313,7 @@ for(let j=0;
 
 								function() {
 									sd.innerHTML+=("\nSCRIPT ENDED."+"\n");
-									pre.innerHTML = kensa.getContextValue('reports').join('\n');
+									pre.innerHTML = tati.getContextValue('reports').join('\n');
 
 									if(typeof(ace)!='undefined') { // is ace.js present
 										editor.session.removeMarker(marker);
@@ -332,7 +332,7 @@ for(let j=0;
 
 							);
 
-		kensa.setContext({reports:[]});
+		tati.setContext({reports:[]});
 
 		function start_run() 
 		{
@@ -348,8 +348,8 @@ for(let j=0;
 			sd.innerHTML = "";
 			pre.innerHTML = "Print Output\n<hr>";
 
-			kensa.prepare(code);
-			kensa.debug();
+			tati.prepare(code);
+			tati.debug();
 
 			document.getElementById("step-button").disabled = false;
 			document.getElementById("continue-button").disabled = false;
@@ -362,7 +362,7 @@ for(let j=0;
 			document.getElementById("step-button").disabled = true;
 			document.getElementById("continue-button").disabled = true;
 			setTimeout( ()=>{
-				kensa.step();
+				tati.step();
 			},0);
 		}
 
@@ -372,7 +372,7 @@ for(let j=0;
 			document.getElementById("step-button").disabled = true;
 			document.getElementById("continue-button").disabled = true;
 			setTimeout( ()=>{
-				kensa.continue();
+				tati.continue();
 			},0);
 		}
 
@@ -380,7 +380,7 @@ for(let j=0;
 		{
 			document.getElementById("pause-button").disabled = true;
 			setTimeout( ()=>{
-				kensa.pause();
+				tati.pause();
 			},0);
 		}
 
@@ -415,7 +415,7 @@ for(let j=0;
 						var breakpoints = {};
 						for(a in editor.session.getBreakpoints()) breakpoints[parseInt(a)+1]=true;
 
-						kensa.setAllBreakpoints(breakpoints);
+						tati.setAllBreakpoints(breakpoints);
 
 					});
 

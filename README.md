@@ -55,31 +55,31 @@ It is also available via unpkg CDN and can be included in HTML files using
         
 As a simple example Tati can be used like this:
 
-        var k = new Tati (
+        var t = new Tati (
                                 function(r,c,ws) {return true;}
                              );
 
-        k.prepare(
+        t.prepare(
                 `console.log(1);
                  console.log(2);
                  console.log(3);
                  console.log(4);
                  `);
-        k.setBreakpoint(2);
-        k.setBreakpoint(3);
+        t.setBreakpoint(2);
+        t.setBreakpoint(3);
 
-        k.debug(true); // runs until reaching the breakpoint on line 2 
+        t.debug(true); // runs until reaching the breakpoint on line 2 
                        // (output:  1) 
-        k.continue();  // runs until reaching the breakpoint on line 3 
+        t.continue();  // runs until reaching the breakpoint on line 3 
                        // (output:  2) 
-        k.continue();  // runs until end as no breakpoint remains
+        t.continue();  // runs until end as no breakpoint remains
                        // (output:  3,4)
 
 Tati is also able to set the script context. This can be used to setup
 environment or even mask global objects like `document` or `window`. For example
 calling
 
-        k.setContext({document: null, window: null, foo: 123});
+        t.setContext({document: null, window: null, foo: 123});
 
 before calling the `prepare` function will mask both `document` and `window`
 objects and also introduces a foo variable that can be accessed anywhere in
@@ -105,10 +105,6 @@ To build and pack the script again run:
 And to regenerate the documentation pages run:
 
         npm run jsdoc
-
-
-And meanwhile, if you enjoy please support this project by donating, 
-Many Thanks! <a style="background: #41a2d8 url(https://donorbox.org/images/red_logo.png) no-repeat 37px;color: #fff;text-decoration: none;font-family: Verdana,sans-serif;display: inline-block;font-size: 16px;padding: 15px 38px;padding-left: 75px;-webkit-border-radius: 2px;-moz-border-radius: 2px;border-radius: 2px;box-shadow: 0 1px 0 0 #1f5a89;text-shadow: 0 1px rgba(0, 0, 0, 0.3);" href="https://donorbox.org/tati?default_interval=o&amount=30">Donate</a>
 
 ---
 
