@@ -110,10 +110,10 @@ class Tati
 
 
 	constructor(  step_callback=null, 
-				  stop_callback=null, 
-				  error_callback=null, 
-				  use_worker=false,
-				  default_root ) 
+							  stop_callback=null, 
+							  error_callback=null, 
+							  use_worker=false,
+							  default_root ) 
 	{
 
 		var perr = Tati.__error_proxy__.bind(this);
@@ -243,7 +243,8 @@ class Tati
 					if(e.data.ctx!==undefined) {
 						this.#context = e.data.ctx;
 					}
-					this.stop_callback();
+					if(this.stop_callback!==null)
+						this.stop_callback();
 				} 
 				else if(e.data.ev==="err") {
 					this.error_callback(e.data.r, e.data.c, e.data.t, e.data.d);
