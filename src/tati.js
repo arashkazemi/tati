@@ -545,6 +545,8 @@ class Tati
 
 	/**
 	* Sets a breakpoint on the given line.
+	* 
+	* @param {integer} line The breakpoint line.
 	*/
 
 	setBreakpoint(line) 
@@ -575,6 +577,8 @@ class Tati
 
 	/**
 	* Clears the breakpoint on the given line.
+	* 
+	* @param {integer} line The breakpoint line.
 	*/
 
 	clearBreakpoint(line) 
@@ -686,6 +690,9 @@ class Tati
 	* This will still be true when using workers, the only difference is
 	* that a cloning will be applied and the results will only contain
 	* plain objects. See also {@link Tati#getWorkerContext} 
+	* 
+	* @param {integer} varname The variable name.
+	* the process.
 	*/
 
 	getContextValue(varname) 
