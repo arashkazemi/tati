@@ -104,14 +104,6 @@ can be found in the <code>/docs</code> and also in the source files.</p>
     t.continue();  // runs until end as no breakpoint remains
                    // (output:  3,4)
 </code></pre>
-<p>Tati is also able to set the script context. This can be used to setup
-environment or even mask global objects like <code>document</code> or <code>window</code>. For example
-calling</p>
-<pre><code>    t.setContext({document: null, window: null, foo: 123});
-</code></pre>
-<p>before calling the <code>prepare</code> function will mask both <code>document</code> and <code>window</code>
-objects and also introduces a foo variable that can be accessed anywhere in
-the target script.</p>
 <p>To know more about using Tati, see the included example and the for the details
 see the class documentation.</p>
 <p>To build the project from scratch open a terminal in the root directory

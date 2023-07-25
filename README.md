@@ -75,16 +75,6 @@ As a simple example Tati can be used like this:
         t.continue();  // runs until end as no breakpoint remains
                        // (output:  3,4)
 
-Tati is also able to set the script context. This can be used to setup
-environment or even mask global objects like `document` or `window`. For example
-calling
-
-        t.setContext({document: null, window: null, foo: 123});
-
-before calling the `prepare` function will mask both `document` and `window`
-objects and also introduces a foo variable that can be accessed anywhere in
-the target script.
-
 To know more about using Tati, see the included example and the for the details
 see the class documentation.
 
