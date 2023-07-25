@@ -370,10 +370,10 @@ setTimeout( addBeta, 10 );
 					});
 
 				env.editor.on("change", function(e) {
+					pause(index);
 					document.getElementById("step-button-"+this.index).disabled = true;
 					document.getElementById("continue-button-"+this.index).disabled = true;
 					document.getElementById("pause-button-"+this.index).disabled = true;
-					pause(index);
 				}.bind(env.editor));
 			}
 
@@ -382,10 +382,10 @@ setTimeout( addBeta, 10 );
 				document.getElementById("no-ace-notice").style.display = "block";
 
 				document.getElementById("editor-"+index).onkeydown = function(e) {
+					pause(index);
 					document.getElementById("step-button-"+index).disabled = true;
 					document.getElementById("continue-button-"+index).disabled = true;
 					document.getElementById("pause-button-"+index).disabled = true;
-					pause(index);
 				};
 			}
 
