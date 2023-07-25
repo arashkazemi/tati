@@ -28,9 +28,6 @@
 */
 
 
-'use strict';
-
-
 const esprima = require("esprima");
 const escodegen = require("escodegen");
 
@@ -263,12 +260,11 @@ class Tati
 			this.#worker.postMessage(Tati.toString());
 		}
 
+
 		if(this.#__is_browser__()) {
 			window.addEventListener("unhandledrejection", perr);
 		}
-		else if(Tati.__is_worker__()) {
-		}
-		else {
+		else if(!Tati.__is_worker__()) {
 			process.on('unhandledRejection', perr);
 		}
 
@@ -301,6 +297,9 @@ class Tati
 	prepare( code, watch_locals=true, step_loop_args=true ) 
 	{
 		this.#prepare_index++;
+		this.error = null;
+		this.#run_func = null;
+		this.#debug_func = null;
 
 		this.#step_loop_args = step_loop_args;
 
@@ -310,9 +309,6 @@ class Tati
 			this.#esp = esprima.parse( code, {loc:true} );
 		}
 		catch(e) {
-
-			this.#run_func = null;
-			this.#debug_func = null;
 
 			if(this.#worker!==null) {
 				this.#worker.postMessage({"func":"set-funcs", "args":null});						
@@ -329,6 +325,7 @@ class Tati
 
 		let ctx = [ "__tati_template_watch_args__",
 					"__tati_template_no_watch_args__",
+					"__tati_error_proxy__",
 					...Object.keys(this.#context), 
 					"__tati_space__", 
 					...this.#masked ].join(',');
@@ -338,7 +335,7 @@ class Tati
 		this.#asyncize(this.#esp);
 		this.#tatize(this.#esp, ws);
 
-		this.#debug_func = eval(`(async function(${ctx}) { ${escodegen.generate(this.#esp)} })`);
+		this.#debug_func = eval(`(async function(${ctx}) { try{ ${escodegen.generate(this.#esp)} } catch(e){__tati_error_proxy__(e)} })`);
 
 		if(this.#worker!==null) {
 			this.#worker.postMessage({"func":"set-funcs", "args":[this.#run_func.toString(), this.#debug_func.toString()]});						
@@ -347,19 +344,17 @@ class Tati
 		this.#run_func = this.#run_func.bind(this.#default_root);
 		this.#debug_func = this.#debug_func.bind(this.#default_root);
 
-		this.error = null;
 	};
 
 
 	/**
 	* Runs the prepared code as it is, **without** the debug codes. 
 	* The only difference is that it is processed anyway, so the flow and 
-	* the environment of the two debug/release procedures would be the same.                
+	* the environment of the two debug/run procedures are the same.                
 	*/
 
 	run() 
 	{
-
 		if(this.#worker!==null) {
 			this.#worker.postMessage({"func":"run", "args":[...arguments]});
 			return;
@@ -367,9 +362,12 @@ class Tati
 
 		if(this.#run_func==null) return;
 
+		this.error = null;
+
 		let pr = this.#run_func(
 							this.#__template_watch_args__.bind(this,this.#prepare_index),
 							this.#__template_no_watch_args__.bind(this,this.#prepare_index),
+							Tati.__error_proxy__.bind(this),
 							...Object.values(this.#context))
 
 		pr.then( (function() {
@@ -411,11 +409,14 @@ class Tati
 
 		if(this.#debug_func==null) return;
 
+		this.error = null;
+
 		this.#run_to_breakpoint = run_to_breakpoint;
 
 		let pr = this.#debug_func(
 							this.#__template_watch_args__.bind(this,this.#prepare_index),
 							this.#__template_no_watch_args__.bind(this,this.#prepare_index),
+							Tati.__error_proxy__.bind(this),
 							...Object.values(this.#context));
 
 		pr.then( (function() {
@@ -769,16 +770,21 @@ class Tati
 		}
 	}
 
+
 	#__is_browser__ = new Function("try {return this===window;}catch(e){ return false;}").bind(undefined);
+
 
 	#wrap(a, ws) 
 	{
 		this.#tatize( a, ws );
 
 		if(a.type!="BlockStatement" && a.type!="CatchClause") {
+
 			var el = {
 				"type": "BlockStatement",
-				"body": [ this.#template_block(a, ws), a ]
+				"body": [ 
+
+					this.#template_block(a, ws), a ]
 			};
 
 			return el;
@@ -786,6 +792,52 @@ class Tati
 
 		return a;
 	};
+
+
+	#wrap_try_catch(a) 
+	{
+			var el = {
+          "type": "BlockStatement",
+          "body": [
+            {
+              "type": "TryStatement",
+              "block": a,
+              "handler": {
+                "type": "CatchClause",
+                "param": {
+                  "type": "Identifier",
+                  "name": "e"
+                },
+                "body": {
+                  "type": "BlockStatement",
+                  "body": [
+										{
+	                    "type": "ExpressionStatement",
+	                    "expression": {
+	                      "type": "CallExpression",
+	                      "callee": {
+                          "type": "Identifier",
+                          "name": "__tati_error_proxy__"
+	                      },
+	                      "arguments": [
+	                        {
+	                          "type": "Identifier",
+	                          "name": "e"
+	                        }
+	                      ]
+	                    }
+	                  }
+                  ]
+                }
+              },
+              "finalizer": null
+            }
+          ]
+        }
+
+			return el;
+	};
+
 
 	#tatize(a,ws) 
 	{
@@ -815,6 +867,7 @@ class Tati
 
 				this.#tatize( abi, ws );
 			}
+
 		}
 		else if(a.type=="ForStatement") {
 			if(this.#step_loop_args) {
@@ -837,20 +890,22 @@ class Tati
 		}
 		else if(a.type=="FunctionDeclaration" || 
 			a.type=="FunctionExpression" ||
+			a.type=="ArrowFunctionExpression" ||
 			a.type=="ForInStatement" ||
 			a.type=="ForOfStatement" ||
 			a.type=="CatchClause" ||
 			a.type=="WithStatement") 
 		{
 			if( a.type=="FunctionDeclaration" || 
-				a.type=="FunctionExpression") {
+				a.type=="FunctionExpression" ||
+				a.type=="ArrowFunctionExpression") {
 
 				for(var j=0; j<a.params.length; j++) {
 					if(ws!=null)
 						ws.push(a.params[j].name);
 				}       
 			}
-			a.body = this.#wrap(a.body, ws);
+			a.body = this.#wrap_try_catch(this.#wrap(a.body, ws));
 		}
 		else if(a.type=="IfStatement") {
 			if(a.alternate!=null) a.alternate = this.#wrap(a.alternate, ws);
@@ -911,6 +966,7 @@ class Tati
 		if(ws!=null && a.type=="BlockStatement") ws=ws[0];
 	}
 
+
 	#asyncize(ast) 
 	{
 
@@ -926,13 +982,16 @@ class Tati
 							"argument": ast[el]
 						}
 					}
-					else if(ast[el].type=="FunctionDeclaration" || ast[el].type=="FunctionExpression") {
+					else if( ast[el].type=="FunctionDeclaration" || 
+									 ast[el].type=="FunctionExpression" || 
+									 ast[el].type=="ArrowFunctionExpression" ) {
 						ast[el].async=true;
 					}
 				}
 			}
 		}
 	}
+
 
 	#template_generate_watch_args(ws)
 	{
@@ -981,6 +1040,7 @@ class Tati
 		return wss;
 	}
 
+
 	#template_block(el,ws)
 	{
 
@@ -1019,6 +1079,7 @@ class Tati
 
 		return res;
 	};
+
 
 	#template_inline(el,ws)
 	{
@@ -1085,7 +1146,7 @@ class Tati
 
 				let vals={};
 
-				for(let i=4;i<arguments.length;i+=2) {
+				for(let i=3;i<arguments.length;i+=2) {
 					if(arguments[i+1]==undefined) {
 						vals[arguments[i]]=undefined;
 					}
@@ -1107,7 +1168,7 @@ class Tati
 		else {
 			let vals={};
 
-					for(let i=4;i<arguments.length;i+=2) {
+					for(let i=3;i<arguments.length;i+=2) {
 						if(arguments[i+1]==undefined) {
 							vals[arguments[i]]=undefined;
 						}
@@ -1126,6 +1187,7 @@ class Tati
 		}
 		return true;
 	}
+
 
 	async #__template_no_watch_args__(pid, r,c) 
 	{
@@ -1169,6 +1231,7 @@ class Tati
 		return true;
 	}
 
+
 	static __error_proxy__(err)
 	{
 		if(this.error_callback!=null) {
@@ -1188,6 +1251,7 @@ class Tati
 		this.last_column=-1;
 	}
 
+
 	static __is_worker__()
 	{
 		if( typeof(Worker_threads)!=="undefined" ) {
@@ -1195,6 +1259,7 @@ class Tati
 		}
 		return typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope;
 	}
+
 
 	static __recursive_clone__(o)
 	{
@@ -1215,6 +1280,7 @@ class Tati
 	  }
 	  return oc;
 	}
+
 }
 
 module.exports = Tati;

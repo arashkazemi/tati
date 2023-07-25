@@ -305,7 +305,7 @@ for(let j=0;
 								},
 
 								function() {
-									sd.innerHTML+=("\nSCRIPT ENDED."+"\n");
+									if(tati.error===null) sd.innerHTML+=("\nSCRIPT ENDED."+"\n");
 									pre.innerHTML = tati.getContextValue('reports').join('\n');
 
 									if(typeof(ace)!='undefined') { // is ace.js present

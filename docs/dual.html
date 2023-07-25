@@ -158,10 +158,11 @@
 			#osc-box {
 				position: absolute;
 				top:calc(50% - 20px);
-				right: 200px;
+				left: calc(50% + 170px);
 				width:200px;
 				height:40px;
 				background: #0001;
+				border-radius: 40px;
 			}
 			#osc {
 				position: absolute;
@@ -371,6 +372,8 @@ setTimeout( addBeta, 10 );
 				env.editor.on("change", function(e) {
 					document.getElementById("step-button-"+this.index).disabled = true;
 					document.getElementById("continue-button-"+this.index).disabled = true;
+					document.getElementById("pause-button-"+this.index).disabled = true;
+					pause(index);
 				}.bind(env.editor));
 			}
 
@@ -381,6 +384,8 @@ setTimeout( addBeta, 10 );
 				document.getElementById("editor-"+index).onkeydown = function(e) {
 					document.getElementById("step-button-"+index).disabled = true;
 					document.getElementById("continue-button-"+index).disabled = true;
+					document.getElementById("pause-button-"+index).disabled = true;
+					pause(index);
 				};
 			}
 
@@ -416,7 +421,7 @@ setTimeout( addBeta, 10 );
 										},
 
 										function() {
-											envs[this.index].msg = "Script Ended!";
+											if(envs[this.index].tati.error===null) envs[this.index].msg = "Script Ended!";
 											updateOutput();
 
 											if(typeof(ace)!='undefined') { // is ace.js present
