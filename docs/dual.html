@@ -193,19 +193,13 @@
 					<hr style="width:66%;margin:1rem auto;">
 				</div>
 				<p id="ace-notice">
-					You can change the code, and also toggle breakpoints by clicking on the gutter.<br>
-					Use <b>Start</b> to begin debugging the code.<br>
-					Use <b>Step</b> for Stepping through and use <b>Continue</b> for going until 
-					the next breakpoint or end.<br>
+					Like other demos, you can change the code, and also toggle breakpoints by clicking on the gutter.<br>
 				</p>
 				<p id="no-ace-notice">
-					You can change the code, but toggling breakpoints and also highlighting 
-					the next line is deactivated because ace editor is not loaded (the row 
-					is written in the next step box).<br>
-					Use <b>Start</b> to begin debugging the code.<br>
-					Use <b>Step</b> for Stepping through and use <b>Continue</b> for going until 
-					the next breakpoint or end.<br>
+					Like other demos, you can change the code, but toggling breakpoints and also highlighting 
+					the next line is deactivated because ace editor is not loaded.<br><b>(Check your internet connection as ace could be really helpful in this demo!)</b><br>
 				</p>
+					<center style='text-shadow: 0 0 15px #fff; color:#994b98'>Hint: Start and then Continue both scripts to get what is going on, then play around!</center>
 
 <pre id="editor-1" contenteditable
 >// Note that running will continue after script end, 
@@ -255,17 +249,16 @@ setTimeout( addBeta, 10 );
 			<button onclick="start_run(1);"><span class="fa fa-play" aria-hidden="true"></span> Start</button>
 			<button id="step-button-1" onclick="step(1);" disabled><span class="fa fa-step-forward" aria-hidden="true"></span>Step</button>
 			<button id="continue-button-1" onclick="do_continue(1);" disabled><span class="fa far fa-play-circle" aria-hidden="true"></span>Continue</button>
- 			<button id="pause-button-1" onclick="pause(1);"><span class="fa far fa-play-pause" aria-hidden="true"></span>Pause</button>
+ 			<button id="pause-button-1" onclick="pause(1);"><span class="fa fa-pause" aria-hidden="true"></span>Pause</button>
 |||
 
 
 			<button onclick="start_run(2);"><span class="fa fa-play" aria-hidden="true"></span> Start</button>
 			<button id="step-button-2" onclick="step(2);" disabled><span class="fa fa-step-forward" aria-hidden="true"></span>Step</button>
 			<button id="continue-button-2" onclick="do_continue(2);" disabled><span class="fa far fa-play-circle" aria-hidden="true"></span>Continue</button>
-			<button id="pause-button-2" onclick="pause(2);"><span class="fa far fa-play-pause" aria-hidden="true"></span>Pause</button>
+			<button id="pause-button-2" onclick="pause(2);"><span class="fa fa-pause" aria-hidden="true"></span>Pause</button>
 			<div id='outputs'>
 				<pre id="result">
-					<center>Hint: Start and then Continue both scripts to get what is going on, then play around!</center>
 					<div id='osc-box'><div id='osc'></div></div></pre>
 			</div>				
 		</div>
