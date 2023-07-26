@@ -11,9 +11,9 @@ or follow the execution inside try-catch blocks and arrow functions. Tati
 is even able to run the code in a separate worker and debug it from the main
 thread.
 
-Tati is also able to define runtime context, mask global variables even
-globalThis, so the interaction between the debugged script and the environment 
-can be controlled precisely. 
+Tati provides methods to define, modify and access runtime context and mask 
+global variables even the globalThis, so the interaction between the debugged 
+script and the environment can be controlled precisely. 
 
 Debugging using Tati is different from using the internal inspector (and 
 perhaps from any other debugger on the planet!), as with Tati the runtime isn't 
