@@ -100,4 +100,6 @@ And to regenerate the documentation pages run:
 
 Copyright (C) 2022-2023 Arash Kazemi <contact.arash.kazemi@gmail.com>
 
+All rights reserved.
+
 Tati project is subject to the terms of BSD-2-Clause License. See the `LICENSE` file for more details.
