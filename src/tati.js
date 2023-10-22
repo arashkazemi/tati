@@ -190,7 +190,9 @@ class Tati
 
 						var Tati = self.__tati_space__.Tati; 
 
-						self.__tati_space__.tati = new Tati(self.__tati_space__.step_callback, self.__tati_space__.stop_callback, self.__tati_space__.error_callback);
+						self.__tati_space__.tati = new Tati(self.__tati_space__.step_callback, 
+																								self.__tati_space__.stop_callback, 
+																								self.__tati_space__.error_callback);
 						self.__tati_space__.onerror = self.__tati_space__.Tati.__error_proxy__.bind(self.__tati_space__.tati);
 					}
 					else {
@@ -385,7 +387,6 @@ class Tati
 				Tati.__error_proxy__.bind(this)(e);
 			}
 			this.error = e;
-
 		}).bind(this) );
 	}
 
@@ -1233,6 +1234,10 @@ class Tati
 
 	static __error_proxy__(err)
 	{
+		if(this.error) { // prevent multiple calls on error propagation
+			return;
+		}
+
 		if(this.error_callback!=null) {
 			if(err.reason!==undefined) {
 				this.error_callback(this.last_row, this.last_column, "runtime", err.reason.message);
