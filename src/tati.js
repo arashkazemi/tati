@@ -293,9 +293,13 @@ class Tati
 	* 
 	*            for( let i=0; i<n; i++ ) {...}
 	* 
+	* @param {boolean} is_module - If set, the code will be treated as module,
+	* i.e. import and export statements will work, otherwise they will raise
+	* an unexpected token error in parse time.
+	* 
 	*/
 
-	prepare( code, watch_locals=true, step_loop_args=true ) 
+	prepare( code, watch_locals=true, step_loop_args=true, is_module=false ) 
 	{
 		this.#prepare_index++;
 		this.error = null;
@@ -307,7 +311,12 @@ class Tati
 		var ws = watch_locals ? [[]] : null;
 
 		try {
-			this.#esp = esprima.parse( code, {loc:true} );
+			if(is_module) {
+				this.#esp = esprima.parse( code, {loc:true, sourceType: 'module'} );
+			}
+			else {
+				this.#esp = esprima.parse( code, {loc:true} );
+			}
 		}
 		catch(e) {
 
