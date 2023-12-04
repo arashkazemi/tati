@@ -64,6 +64,7 @@ class Tati
 	#ui_refresh_counter = 0;
 	#prepare_index = 0;
 
+	#is_module = false;
 
 	/**
 	* Creates an instance of Tati.
@@ -295,18 +296,28 @@ class Tati
 	* 
 	* @param {boolean} is_module - If set, the code will be treated as module,
 	* i.e. import and export statements will work, otherwise they will raise
-	* an unexpected token error in parse time.
+	* an unexpected token error in parse time. Note that imports cannot be 
+	* executed, because normal import statements must be the top-level of a module
+	* and this cannot be the case when tati is wrapping the code. Also `import()`
+	* function is supported by Tati, but unfortunately Esprima doesn't support
+	* it yet and therefore raises a parser error exception.
 	* 
 	*/
 
 	prepare( code, watch_locals=true, step_loop_args=true, is_module=false ) 
 	{
+
+		if(is_module && this.#worker!==null && this.#__is_browser__()) {
+			throw "modules can't be created dynamically in browser workers.";
+		}
+
 		this.#prepare_index++;
 		this.error = null;
 		this.#run_func = null;
 		this.#debug_func = null;
 
 		this.#step_loop_args = step_loop_args;
+		this.#is_module = is_module;
 
 		var ws = watch_locals ? [[]] : null;
 
@@ -319,7 +330,7 @@ class Tati
 			}
 		}
 		catch(e) {
-
+			console.log(e);
 			if(this.#worker!==null) {
 				this.#worker.postMessage({"func":"set-funcs", "args":null});						
 			}
@@ -340,8 +351,10 @@ class Tati
 					"__tati_space__", 
 					...this.#masked ].join(',');
 
-		this.#run_func = eval(`(async function(${ctx}) { ${escodegen.generate(this.#esp)} })`);
 
+		this.#run_func = eval(`(async function(${ctx}) { ${escodegen.generate(this.#esp)} })`);
+		console.log(escodegen.generate(this.#esp))
+		console.log(this.#run_func);
 		this.#asyncize(this.#esp);
 		this.#tatize(this.#esp, ws);
 
@@ -374,29 +387,67 @@ class Tati
 
 		this.error = null;
 
-		let pr = this.#run_func(
+		let rf = this.#run_func.bind(null,
 							this.#__template_watch_args__.bind(this,this.#prepare_index),
 							this.#__template_no_watch_args__.bind(this,this.#prepare_index),
 							Tati.__error_proxy__.bind(this),
-							...Object.values(this.#context))
+							...Object.values(this.#context));
+		
 
-		pr.then( (function() {
+		if(this.is_module) {
 
-			if(this.stop_callback!==null) {
-				this.stop_callback();
-			}
+			globalThis.__tati_run_func__ = rf;
+			this.#eval_module("globalThis.__tati_run_promise__ = globalThis.__tati_run_func__()", function() {
 
-			this.last_row=-1;
-			this.last_column=-1;
+				let pr = globalThis.__tati_run_promise__;
+				globalThis.__tati_run_promise__ = undefined;
+				globalThis.__tati_run_func__ = undefined;
 
-		}).bind(this) );
+				pr.then( (function() {
 
-		pr.catch( (function(e) {
-			if(this.error_callback!==null) {
-				Tati.__error_proxy__.bind(this)(e);
-			}
-			this.error = e;
-		}).bind(this) );
+					if(this.stop_callback!==null) {
+						this.stop_callback();
+					}
+
+					this.last_row=-1;
+					this.last_column=-1;
+
+				}).bind(this) );
+
+				pr.catch( (function(e) {
+					if(this.error_callback!==null) {
+						Tati.__error_proxy__.bind(this)(e);
+					}
+					this.error = e;
+				}).bind(this) );
+
+			}.bind(this));
+
+		}
+		else {
+
+			let pr = rf();
+
+			pr.then( (function() {
+
+				if(this.stop_callback!==null) {
+					this.stop_callback();
+				}
+
+				this.last_row=-1;
+				this.last_column=-1;
+
+			}).bind(this) );
+
+			pr.catch( (function(e) {
+				if(this.error_callback!==null) {
+					Tati.__error_proxy__.bind(this)(e);
+				}
+				this.error = e;
+			}).bind(this) );
+
+		}
+
 	}
 
 
@@ -422,30 +473,67 @@ class Tati
 
 		this.#run_to_breakpoint = run_to_breakpoint;
 
-		let pr = this.#debug_func(
+
+
+		let rf = this.#debug_func.bind(null,
 							this.#__template_watch_args__.bind(this,this.#prepare_index),
 							this.#__template_no_watch_args__.bind(this,this.#prepare_index),
 							Tati.__error_proxy__.bind(this),
 							...Object.values(this.#context));
 
-		pr.then( (function() {
 
-			if(this.stop_callback!=null) {
-				this.stop_callback();
-			}
+		if(this.is_module) {
 
-			this.last_row=-1;
-			this.last_column=-1;
+			globalThis.__tati_run_func__ = rf;
+			this.#eval_module("globalThis.__tati_run_promise__ = globalThis.__tati_run_func__()", function() {
+				let pr = globalThis.__tati_run_promise__;
+				globalThis.__tati_run_promise__ = undefined;
+				globalThis.__tati_run_func__ = undefined;
 
-		}).bind(this) );
+				pr.then( (function() {
 
-		pr.catch( (function(e) {
-			if(this.error_callback!=null) {
-				Tati.__error_proxy__.bind(this)(e);
-			}
-			this.error = e;
+					if(this.stop_callback!==null) {
+						this.stop_callback();
+					}
 
-		}).bind(this) );
+					this.last_row=-1;
+					this.last_column=-1;
+
+				}).bind(this) );
+
+				pr.catch( (function(e) {
+					if(this.error_callback!==null) {
+						Tati.__error_proxy__.bind(this)(e);
+					}
+					this.error = e;
+				}).bind(this) );
+
+			}.bind(this));
+
+		}
+		else {
+			
+			let pr = rf();
+
+			pr.then( (function() {
+
+				if(this.stop_callback!==null) {
+					this.stop_callback();
+				}
+
+				this.last_row=-1;
+				this.last_column=-1;
+
+			}).bind(this) );
+
+			pr.catch( (function(e) {
+				if(this.error_callback!==null) {
+					Tati.__error_proxy__.bind(this)(e);
+				}
+				this.error = e;
+			}).bind(this) );
+
+		}
 
 	}
 
@@ -759,6 +847,45 @@ class Tati
 
 
 	// For internal use
+
+
+
+	#eval_module_in_browser(code, onload) 
+	{
+		// based on https://stackoverflow.com/a/47980361
+
+	    var script = document.createElement('script');
+	    script.type = 'module';
+	    script.innerHTML = code + "\n" + 
+	                       "if(window.script_loaded_hook){window.script_loaded_hook();}";           
+
+	    window.script_loaded_hook = function(onload,script) {
+	    	if(onload) onload();
+	        window.script_loaded_hook = undefined;
+	        document.body.removeChild(script);
+	    }.bind(null,onload,script);
+
+	    document.body.appendChild(script); 
+	}
+
+	async #eval_module_in_node(code, onload) 
+	{
+		const scr = 'data:text/javascript;base64,' + Buffer.from(code).toString('base64');
+		await import(scr);
+
+		if(onload) onload();
+	}
+
+	#eval_module(code, onload)
+	{
+		if(this.#__is_browser__()) {
+			this.#eval_module_in_browser(code, onload);
+		}
+		else {
+			this.#eval_module_in_node(code, onload);
+		}
+	}
+
 
 
 	__set_worker_funcs__(run_func, debug_func) 
