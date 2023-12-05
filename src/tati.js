@@ -330,7 +330,7 @@ class Tati
 			}
 		}
 		catch(e) {
-			console.log(e);
+
 			if(this.#worker!==null) {
 				this.#worker.postMessage({"func":"set-funcs", "args":null});						
 			}
@@ -353,8 +353,7 @@ class Tati
 
 
 		this.#run_func = eval(`(async function(${ctx}) { ${escodegen.generate(this.#esp)} })`);
-		console.log(escodegen.generate(this.#esp))
-		console.log(this.#run_func);
+
 		this.#asyncize(this.#esp);
 		this.#tatize(this.#esp, ws);
 
