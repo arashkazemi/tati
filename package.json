@@ -1,6 +1,6 @@
 {
   "name": "tati",
-  "version": "2.1.7",
+  "version": "2.1.8",
   "description": "A Javascript Debugger without Using the Built-in Runtime Inspector",
   "repository": "github:arashkazemi/tati",
   "homepage": "https://arashkazemi.github.io/tati/",

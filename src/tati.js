@@ -357,7 +357,9 @@ class Tati
 		this.#asyncize(this.#esp);
 		this.#tatize(this.#esp, ws);
 
-		this.#debug_func = eval(`(async function(${ctx}) { try{ ${escodegen.generate(this.#esp)} } catch(e){__tati_error_proxy__(e)} })`);
+		const new_code = escodegen.generate(this.#esp).replace(/\/ __tati_template_paranthesis__/gm, "");
+
+		this.#debug_func = eval(`(async function(${ctx}) { try{ ${new_code} } catch(e){__tati_error_proxy__(e)} })`);
 
 		if(this.#worker!==null) {
 			this.#worker.postMessage({"func":"set-funcs", "args":[this.#run_func.toString(), this.#debug_func.toString()]});						
@@ -1040,7 +1042,17 @@ class Tati
 						ws.push(a.params[j].name);
 				}       
 			}
-			a.body = this.#wrap_try_catch(this.#wrap(a.body, ws));
+			if(a.type==="ArrowFunctionExpression") {
+				if(a.body	.type==='BlockStatement') {
+					a.body = this.#wrap_try_catch(this.#wrap(a.body, ws));
+				}
+				else {
+					a.body = this.#template_inline(a.body, ws);
+				}
+			}
+			else {
+				a.body = this.#wrap_try_catch(this.#wrap(a.body, ws));
+			}
 		}
 		else if(a.type=="IfStatement") {
 			if(a.alternate!=null) a.alternate = this.#wrap(a.alternate, ws);
@@ -1108,13 +1120,14 @@ class Tati
 		if(typeof(ast)=="object" ) {
 			for(let el in ast) {
 				this.#asyncize(ast[el]);
-
 				if(ast[el]!=null && typeof(ast[el].type)!="undefined") {
 
 					if(ast[el].type=="CallExpression") {
+
 						ast[el] = {
 							"type": "AwaitExpression",
-							"argument": ast[el]
+							"argument": ast[el],
+							"loc": ast[el].loc
 						}
 					}
 					else if( ast[el].type=="FunctionDeclaration" || 
@@ -1219,42 +1232,56 @@ class Tati
 	#template_inline(el,ws)
 	{
 
-		let res = {
-			"type": "LogicalExpression",
-			"operator": "&&",
-			"left": {
-				"type": "AwaitExpression",
-				"argument": {
-					"type": "CallExpression",
-					"callee": {
-						"type": "Identifier",
-						"name": "__tati_template_no_watch_args__"
-					},
-					"arguments": [
-					{
-						"type": "Literal",
-						"value": el.loc.start.line,
-						"raw": "" + el.loc.start.line
-					}, 
-					{
-						"type": "Literal",
-						"value": el.loc.start.column,
-						"raw": "" + el.loc.start.column
-					}
-					],
-					"optional": false
-				}
-			},
-			"right": el
-		};
+
+		let res = 
+
+				{
+					"type": "BinaryExpression",
+					"operator": "/",
+					"left": 						
+								{
+									"type": "SequenceExpression",
+									"expressions":[ 						
+										{
+												"type": "AwaitExpression",
+												"argument": {
+													"type": "CallExpression",
+													"callee": {
+														"type": "Identifier",
+														"name": "__tati_template_no_watch_args__"
+													},
+													"arguments": [
+													{
+														"type": "Literal",
+														"value": el.loc.start.line,
+														"raw": "" + el.loc.start.line
+													}, 
+													{
+														"type": "Literal",
+														"value": el.loc.start.column,
+														"raw": "" + el.loc.start.column
+													}, 
+												],
+												"optional": false
+											}
+									},
+									el
+								]},
+
+								"right": {
+												"type": "Identifier",
+												"name": "__tati_template_paranthesis__"
+											}
+				};
 
 		if(ws!=null) {
 			let wss = this.#template_generate_watch_args(ws);
-			res.left.argument.callee.name="__tati_template_watch_args__";
-			res.left.argument.arguments.push(...wss);
+			res.left.expressions[0].argument.callee.name="__tati_template_watch_args__";
+			res.left.expressions[0].argument.arguments.push(...wss);
 		}
 
 		return res;
+
 	};
 
 
