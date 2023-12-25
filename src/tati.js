@@ -63,6 +63,7 @@ class Tati
 
 	#ui_refresh_counter = 0;
 	#prepare_index = 0;
+	#is_debug = false;
 
 	#is_module = false;
 
@@ -352,7 +353,7 @@ class Tati
 					...this.#masked ].join(',');
 
 
-		this.#run_func = eval(`(async function(${ctx}) { ${escodegen.generate(this.#esp)} })`);
+		this.#run_func = eval(`(async function(${ctx}) { ${code} })`);
 
 		this.#asyncize(this.#esp);
 		this.#tatize(this.#esp, ws);
@@ -386,6 +387,7 @@ class Tati
 
 		if(this.#run_func==null) return;
 
+		this.#is_debug = false;
 		this.error = null;
 
 		let rf = this.#run_func.bind(null,
@@ -416,10 +418,7 @@ class Tati
 				}).bind(this) );
 
 				pr.catch( (function(e) {
-					if(this.error_callback!==null) {
-						Tati.__error_proxy__.bind(this)(e);
-					}
-					this.error = e;
+					Tati.__error_proxy__.bind(this)(e);
 				}).bind(this) );
 
 			}.bind(this));
@@ -441,10 +440,7 @@ class Tati
 			}).bind(this) );
 
 			pr.catch( (function(e) {
-				if(this.error_callback!==null) {
-					Tati.__error_proxy__.bind(this)(e);
-				}
-				this.error = e;
+				Tati.__error_proxy__.bind(this)(e);
 			}).bind(this) );
 
 		}
@@ -470,6 +466,7 @@ class Tati
 
 		if(this.#debug_func==null) return;
 
+		this.#is_debug = true;
 		this.error = null;
 
 		this.#run_to_breakpoint = run_to_breakpoint;
@@ -503,10 +500,7 @@ class Tati
 				}).bind(this) );
 
 				pr.catch( (function(e) {
-					if(this.error_callback!==null) {
-						Tati.__error_proxy__.bind(this)(e);
-					}
-					this.error = e;
+					Tati.__error_proxy__.bind(this)(e);
 				}).bind(this) );
 
 			}.bind(this));
@@ -528,10 +522,7 @@ class Tati
 			}).bind(this) );
 
 			pr.catch( (function(e) {
-				if(this.error_callback!==null) {
-					Tati.__error_proxy__.bind(this)(e);
-				}
-				this.error = e;
+				Tati.__error_proxy__.bind(this)(e);
 			}).bind(this) );
 
 		}
@@ -1229,6 +1220,40 @@ class Tati
 	};
 
 
+	#template_block_sync(el,ws)
+	{
+
+		let res = {
+					"type": "CallExpression",
+					"callee": {
+						"type": "Identifier",
+						"name": "__tati_template_no_watch_args__"
+					},
+					"arguments": [
+					{
+						"type": "Literal",
+						"value": el.loc.start.line,
+						"raw": "" + el.loc.start.line
+					}, 
+					{
+						"type": "Literal",
+						"value": el.loc.start.column,
+						"raw": "" + el.loc.start.column
+					}
+					],
+					"optional": false
+		};
+
+		if(ws!=null) {
+			let wss = this.#template_generate_watch_args(ws);
+			res.expression.argument.callee.name="__tati_template_watch_args__";
+			res.expression.argument.arguments.push(...wss);
+		}
+
+		return res;
+	};
+
+
 	#template_inline(el,ws)
 	{
 
@@ -1400,6 +1425,19 @@ class Tati
 			return;
 		}
 
+		if(!this.#is_debug) {
+			let match = /eval:(\d+):(\d+)[\n]run/m.exec(err.stack);
+			
+			if(match===null) {
+				match = /<anonymous>:(\d+):(\d+)\)\s+at Tati\.run/m.exec(err.stack);
+			}
+
+			if(match) {
+				this.last_row = parseInt(match[1]);
+				this.last_col = parseInt(match[2]);
+			}
+		}
+
 		if(this.error_callback!=null) {
 			if(err.reason!==undefined) {
 				this.error_callback(this.last_row, this.last_column, "runtime", err.reason.message);
@@ -1411,6 +1449,7 @@ class Tati
 				this.error_callback(this.last_row, this.last_column, "runtime", ""+err);
 			}
 		}
+
 		this.error = err;
 
 		this.last_row=-1;
