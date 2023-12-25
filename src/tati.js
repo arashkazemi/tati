@@ -418,7 +418,7 @@ class Tati
 				}).bind(this) );
 
 				pr.catch( (function(e) {
-					Tati.__error_proxy__.bind(this)(e);
+					Tati.__error_proxy__.call(this,e);
 				}).bind(this) );
 
 			}.bind(this));
@@ -440,7 +440,7 @@ class Tati
 			}).bind(this) );
 
 			pr.catch( (function(e) {
-				Tati.__error_proxy__.bind(this)(e);
+				Tati.__error_proxy__.call(this,e);
 			}).bind(this) );
 
 		}
@@ -500,7 +500,7 @@ class Tati
 				}).bind(this) );
 
 				pr.catch( (function(e) {
-					Tati.__error_proxy__.bind(this)(e);
+					Tati.__error_proxy__.call(this,e);
 				}).bind(this) );
 
 			}.bind(this));
@@ -522,7 +522,7 @@ class Tati
 			}).bind(this) );
 
 			pr.catch( (function(e) {
-				Tati.__error_proxy__.bind(this)(e);
+				Tati.__error_proxy__.call(this,e);
 			}).bind(this) );
 
 		}
