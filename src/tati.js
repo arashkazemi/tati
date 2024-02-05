@@ -1,6 +1,6 @@
 /* 
 	Tati
-  Copyright (C) 2022-2023 Arash Kazemi <contact.arash.kazemi@gmail.com>
+  Copyright (C) 2022-2024 Arash Kazemi <contact.arash.kazemi@gmail.com>
   All rights reserved.
 
   Distributed under BSD-2-Clause License:
@@ -459,6 +459,7 @@ class Tati
 
 	debug(run_to_breakpoint=false) 
 	{
+
 		if(this.#worker!==null) {
 			this.#worker.postMessage({"func":"debug", "args":[...arguments]});
 			return;

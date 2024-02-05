@@ -1,6 +1,6 @@
 /* 
   Tati
-  Copyright (C) 2022-2023 Arash Kazemi <contact.arash.kazemi@gmail.com>
+  Copyright (C) 2022-2024 Arash Kazemi <contact.arash.kazemi@gmail.com>
   All rights reserved.
 
   Distributed under BSD-2-Clause License:
