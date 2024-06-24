@@ -173,7 +173,7 @@
 			}
 		</style>
 	</head>
-	<body onload="on_load()">
+	<body onload="onLoad()">
 		<div id="wrapper">
 			<div id="code-stuff">
 				<h2><a href="../index.html">
@@ -194,10 +194,6 @@
 				</div>
 				<p id="ace-notice">
 					Like other demos, you can change the code, and also toggle breakpoints by clicking on the gutter.<br>
-				</p>
-				<p id="no-ace-notice">
-					Like other demos, you can change the code, but toggling breakpoints and also highlighting 
-					the next line is deactivated because ace editor is not loaded.<br><b>(Check your internet connection as ace could be really helpful in this demo!)</b><br>
 				</p>
 					<center style='text-shadow: 0 0 15px #fff; color:#994b98'>Hint: Start and then Continue both scripts to get what is going on, then play around!</center>
 
@@ -246,16 +242,14 @@ setTimeout( addBeta, 10 );
 </pre>
 			</div>
 							
-			<button onclick="start_run(1);"><span class="fa fa-play" aria-hidden="true"></span> Start</button>
+			<button onclick="startRun(1);"><span class="fa fa-play" aria-hidden="true"></span> Start</button>
 			<button id="step-button-1" onclick="step(1);" disabled><span class="fa fa-step-forward" aria-hidden="true"></span>Step</button>
-			<button id="continue-button-1" onclick="do_continue(1);" disabled><span class="fa far fa-play-circle" aria-hidden="true"></span>Continue</button>
+			<button id="continue-button-1" onclick="doContinue(1);" disabled><span class="fa far fa-play-circle" aria-hidden="true"></span>Continue</button>
  			<button id="pause-button-1" onclick="pause(1);"><span class="fa fa-pause" aria-hidden="true"></span>Pause</button>
-|||
-
-
-			<button onclick="start_run(2);"><span class="fa fa-play" aria-hidden="true"></span> Start</button>
+			|||
+			<button onclick="startRun(2);"><span class="fa fa-play" aria-hidden="true"></span> Start</button>
 			<button id="step-button-2" onclick="step(2);" disabled><span class="fa fa-step-forward" aria-hidden="true"></span>Step</button>
-			<button id="continue-button-2" onclick="do_continue(2);" disabled><span class="fa far fa-play-circle" aria-hidden="true"></span>Continue</button>
+			<button id="continue-button-2" onclick="doContinue(2);" disabled><span class="fa far fa-play-circle" aria-hidden="true"></span>Continue</button>
 			<button id="pause-button-2" onclick="pause(2);"><span class="fa fa-pause" aria-hidden="true"></span>Pause</button>
 			<div id='outputs'>
 				<pre id="result">
@@ -275,7 +269,7 @@ setTimeout( addBeta, 10 );
 		continue to work without it, but you won't be able to toggle bookmarks and also 
 		the current line will only be written in text and not highlighted graphically.
 	-->
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.9.5/ace.js" integrity="sha512-wju2wMXmukx2760GKQBjykvRNeRY8LdMn6XnMPJQKRF7olV229IytqfkW9Z83lrdCVA168r4Ut4paNoRxJWoag==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<script src="scripts/ace/ace.js"></script>
 
 
 	<script src="../dist/tati.min.js"></script>
@@ -298,105 +292,80 @@ setTimeout( addBeta, 10 );
 		document.getElementById("pause-button-2").disabled = true;
 				
 
-		function start_run(index) 
+		function startRun(index) 
 		{
 			let env = envs[index];			
 			var code;
 
-			if(typeof(ace)!='undefined') { // is ace.js present
-				code = env.editor.getValue();
-			}
-			else { // simple text input
-				code = document.getElementById("editor-"+index).innerHTML.replace(/&nbsp;/gm, ' ').replace(/<br>/gm, '\n').replace(/&lt;/gm, '<').replace(/&gt;/gm, '>');
-			}
+			code = env.editor.getValue();
 
 			res.innerHTML = "Print Output\n<hr>";
 
 			env.tati.prepare(code);
 			env.tati.debug();
 
-			document.getElementById("step-button-"+index).disabled = false;
-			document.getElementById("continue-button-"+index).disabled = false;
-			document.getElementById("pause-button-"+index).disabled = true;
-	
+			updateButtons(envs[index]);
 		}
 
-		function configure_editor(index)
+		function configureEditor(index)
 		{
 
 			envs[index] = {msg:''};
 			let env = envs[index];
 
-			if(typeof(ace)!="undefined") {  // is ace.js present
+
+			env.editor = ace.edit("editor-"+index);
+
+			env.editor.index = index;
+			env.editor.session.setMode("ace/mode/javascript");
+
+			env.editor.on("guttermousedown", function(e) {
+					var target = e.domEvent.target; 
+					if (target.className.indexOf("ace_gutter-cell") == -1)
+							return; 
+					if (!e.editor.isFocused()) 
+							return;   
+					if (e.clientX > 35 + target.getBoundingClientRect().left) 
+							return; 
+
+					var breakpoints = e.editor.session.getBreakpoints(row, 0);
+					var row = e.getDocumentPosition().row;
+					if(typeof breakpoints[row] === typeof undefined)
+							e.editor.session.setBreakpoint(row);
+					else 
+							e.editor.session.clearBreakpoint(row);
+						e.stop();
 
 
-				env.editor = ace.edit("editor-"+index);
+					// breakpoints should be in the form { 5: true, 10: true }
 
-				env.editor.index = index;
-				env.editor.session.setMode("ace/mode/javascript");
+					var breakpoints = {};
+					for(a in e.editor.session.getBreakpoints()) breakpoints[parseInt(a)+1]=true;
 
-				env.editor.on("guttermousedown", function(e) {
-						var target = e.domEvent.target; 
-						if (target.className.indexOf("ace_gutter-cell") == -1)
-								return; 
-						if (!e.editor.isFocused()) 
-								return;   
-						if (e.clientX > 35 + target.getBoundingClientRect().left) 
-								return; 
+					envs[e.editor.index].tati.setAllBreakpoints(breakpoints);
 
-						var breakpoints = e.editor.session.getBreakpoints(row, 0);
-						var row = e.getDocumentPosition().row;
-						if(typeof breakpoints[row] === typeof undefined)
-								e.editor.session.setBreakpoint(row);
-						else 
-								e.editor.session.clearBreakpoint(row);
-							e.stop();
+				});
+
+			env.editor.on("change", function(e) {
+
+				pause(index, true);
+
+				document.getElementById("step-button-"+this.index).disabled = true;
+				document.getElementById("continue-button-"+this.index).disabled = true;
+				document.getElementById("pause-button-"+this.index).disabled = true;
+
+			}.bind(env.editor));
 
 
-						// breakpoints should be in the form { 5: true, 10: true }
-
-						var breakpoints = {};
-						for(a in e.editor.session.getBreakpoints()) breakpoints[parseInt(a)+1]=true;
-
-						envs[e.editor.index].tati.setAllBreakpoints(breakpoints);
-
-					});
-
-				env.editor.on("change", function(e) {
-					pause(index);
-					setTimeout(()=>{
-						document.getElementById("step-button-"+this.index).disabled = true;
-						document.getElementById("continue-button-"+this.index).disabled = true;
-						document.getElementById("pause-button-"+this.index).disabled = true;
-					},30);
-				}.bind(env.editor));
+			var rng = ace.require('ace/range').Range;
+			function addMarker(editor,start = 0,end = 0,classes ='running',line="fullLine",override = false) 
+			{
+				return editor.session.addMarker(
+						new rng(start, 0, (end === 0 ? start : end), 1), 
+						classes, line, override 
+					);
 			}
 
-			else { // simple text input
-				document.getElementById("ace-notice").style.display = "none";
-				document.getElementById("no-ace-notice").style.display = "block";
-
-				document.getElementById("editor-"+index).onkeydown = function(e) {
-					pause(index);
-					setTimeout(()=>{
-						document.getElementById("step-button-"+index).disabled = true;
-						document.getElementById("continue-button-"+index).disabled = true;
-						document.getElementById("pause-button-"+index).disabled = true;
-					},30);
-				};
-			}
-
-
-			if(typeof(ace)!="undefined") {
-				var rng = ace.require('ace/range').Range;
-				function addMarker(editor,start = 0,end = 0,classes ='running',line="fullLine",override = false) 
-				{
-					return editor.session.addMarker(
-							new rng(start, 0, (end === 0 ? start : end), 1), 
-							classes, line, override 
-						);
-				}
-			}
 
 			env.tati = new Tati ( 
 				
@@ -404,16 +373,14 @@ setTimeout( addBeta, 10 );
 											envs[this.index].msg = "";
 											updateOutput();
 
-											document.getElementById("step-button-"+this.index).disabled = false;
-											document.getElementById("continue-button-"+this.index).disabled = false;
-											document.getElementById("pause-button-"+this.index).disabled = true;
+											updateButtons(envs[this.index]);
 
 											let editor = envs[this.index].editor;
 											let marker = envs[this.index].marker;
-											if(typeof(ace)!='undefined') { // is ace.js present
-												editor.session.removeMarker(marker);
-												envs[this.index].marker = addMarker(editor,r-1,r-1);
-											}
+
+											editor.session.removeMarker(marker);
+											envs[this.index].marker = addMarker(editor,r-1,r-1);
+
 											return true; // tells to pause execution
 										},
 
@@ -421,19 +388,15 @@ setTimeout( addBeta, 10 );
 											//if(envs[this.index].tati.error===null) envs[this.index].msg = "Script Ended!";
 											updateOutput();
 
-											if(typeof(ace)!='undefined') { // is ace.js present
-												envs[this.index].editor.session.removeMarker(envs[this.index].marker);
-											}
+											envs[this.index].editor.session.removeMarker(envs[this.index].marker);
 
-											document.getElementById("step-button-"+this.index).disabled = true;
-											document.getElementById("continue-button-"+this.index).disabled = true;
+											updateButtons(envs[this.index]);
 										},
 
 										function(r,c,error_type,error_desc) {
-											envs[this.index].msg = `Error on ${this.index}:  ${error_type.toUpperCase()} -> ${error_desc}`;
+											envs[this.index].msg = `Error on Console ${this.index}, Row ${r}:  ${error_type.toUpperCase()} -> ${error_desc}`;
 											updateOutput();
-											document.getElementById("step-button-"+this.index).disabled = true;
-											document.getElementById("continue-button-"+this.index).disabled = true;
+											updateButtons(envs[this.index]);
 										},
 
 										false
@@ -443,35 +406,57 @@ setTimeout( addBeta, 10 );
 
 		}
 
+		function updateButtons(env)
+		{
+
+			switch(env.tati.getStatus()) {
+
+				case Tati.STOPPED:
+					document.getElementById("step-button-"+env.tati.index).disabled = true;
+					document.getElementById("continue-button-"+env.tati.index).disabled = true;
+					document.getElementById("pause-button-"+env.tati.index).disabled = true;
+					break;
+
+				case Tati.RUNNING:
+					document.getElementById("step-button-"+env.tati.index).disabled = true;
+					document.getElementById("continue-button-"+env.tati.index).disabled = true;
+					document.getElementById("pause-button-"+env.tati.index).disabled = false;
+					break;
+
+				case Tati.PAUSED:
+					document.getElementById("step-button-"+env.tati.index).disabled = false;
+					document.getElementById("continue-button-"+env.tati.index).disabled = false;
+					document.getElementById("pause-button-"+env.tati.index).disabled = true;
+					break;
+
+
+			}
+
+		}
+
 		function step(index)
 		{
-			document.getElementById("pause-button-"+index).disabled = false;
-			document.getElementById("step-button-"+index).disabled = true;
-			document.getElementById("continue-button-"+index).disabled = true;
 			setTimeout( ()=>{
 				envs[index].tati.step();
+				setTimeout( function(index) { updateButtons(envs[index]); }.bind(null,index), 20 );
 			},0);
 		}
 
-		function do_continue(index)
+		function doContinue(index)
 		{
-			document.getElementById("pause-button-"+index).disabled = false;
-			document.getElementById("step-button-"+index).disabled = true;
-			document.getElementById("continue-button-"+index).disabled = true;
 			setTimeout( ()=>{
 				envs[index].tati.continue();
+				setTimeout( function(index) { updateButtons(envs[index]); }.bind(null,index), 20 );
 			},0);
 		}
 
-		function pause(index)
+		function pause(index, prevent_update)
 		{
-			document.getElementById("pause-button-"+index).disabled = true;
 			setTimeout( ()=>{
 				envs[index].tati.pause();
+				setTimeout( function(index,prevent_update) { if(!prevent_update) updateButtons(envs[index]); }.bind(null,index,prevent_update), 20 );
 			},0);
 		}
-
-
 
 		function updateOutput() {
 			res.innerHTML = `Script 1: Next Row ${envs[1].tati.last_row} Next Col ${envs[1].tati.last_row}\n`+							 
@@ -483,10 +468,12 @@ setTimeout( addBeta, 10 );
 			document.getElementById('osc-box').style.transform = `rotate(${alpha}deg)`;
 			document.getElementById('osc').style.marginLeft = beta+'px';
 		}
-		function on_load() {
-			configure_editor(1);
-			configure_editor(2);
+
+		function onLoad() {
+			configureEditor(1);
+			configureEditor(2);
 		}
+
 	</script>
 
 </html>

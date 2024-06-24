@@ -1,6 +1,6 @@
 {
   "name": "tati",
-  "version": "2.2.0",
+  "version": "3.0.0",
   "description": "A Javascript Debugger without Using the Built-in Runtime Inspector",
   "repository": "github:arashkazemi/tati",
   "homepage": "https://arashkazemi.github.io/tati/",
@@ -33,6 +33,7 @@
   ],
   "license": "BSD-2-Clause",
   "dependencies": {
+    "async.prototypes": "^1.0.0",
     "escodegen": "^2.0.0",
     "esprima": "^4.0.1"
   },

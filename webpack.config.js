@@ -33,7 +33,7 @@ module.exports = {
   entry: './src/tati.js',
   mode: 'production',
   optimization: {
-    //minimize: false,
+    minimize: false,
   },
   output: {
     filename: 'tati.min.js',

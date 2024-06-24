@@ -72,6 +72,7 @@
 				color: #052154;
 				font-size:  144% !important;
 				font-family: lucida sans, helvetica, verdana, sans !important;
+				line-height: 1rem !important;
 			}
 
 			pre, pre *, #editor, #editor * {
@@ -184,7 +185,7 @@
 			}
 		</style>
 	</head>
-	<body onload="on_load()">
+	<body onload="onLoad()">
 		<div id="wrapper">
 			<div id="code-stuff">
 				<h2><a href="../index.html">
@@ -195,15 +196,15 @@
 					A Javascript Debugger without Using the Built-in Runtime Inspector<br>
 					<small>- "Tati" means "Toddle" -</small>
 					<hr style="width:50%;margin:1rem auto;">
-					<a href="index.html">Documentation Home</a> |
-					<a href="Tati.html">Class Docs</a> |
-					<a href="https://github.com/arashkazemi/tati">Github</a> |
+					<a href="index.html">Documentation Home</a>
+					<a href="Tati.html">Class Docs</a>
+					<a href="https://github.com/arashkazemi/tati">Github</a>
 					<a href="https://www.npmjs.com/package/tati">npm Package</a>
 
 					<hr style="width:30%;margin:1rem auto;">
 
-					<a href="simple.html">Simple Demo</a> |
-					<a href="worker.html">Worker Demo</a> |
+					<a href="simple.html">Simple Demo</a>
+					<a href="worker.html">Worker Demo</a>
 					<a href="dual.html">Dual Debuggers</a>
 
 					<hr style="width:66%;margin:1rem auto;">
@@ -242,9 +243,9 @@ for(let j=0;
 		print(j);
 }
 </pre>
-				<button onclick="start_run();"><span class="fa fa-play" aria-hidden="true"></span> Start</button>
+				<button onclick="startRun();"><span class="fa fa-play" aria-hidden="true"></span> Start</button>
 				<button id="step-button" onclick="step();" disabled><span class="fa fa-step-forward" aria-hidden="true"></span>Step</button>
-				<button id="continue-button" onclick="do_continue();" disabled><span class="fa far fa-play-circle" aria-hidden="true"></span>Continue</button>
+				<button id="continue-button" onclick="doContinue();" disabled><span class="fa far fa-play-circle" aria-hidden="true"></span>Continue</button>
 				<button id="pause-button" onclick="pause();" disabled><span class="fa fa-pause" aria-hidden="true"></span> Pause</button>
 			</div>
 			<div id='outputs'>
@@ -263,13 +264,7 @@ for(let j=0;
 		</div>
 	</body>
 
-	<!-- 
-		This example uses ace.js editor, but in case ace is not loaded the example will 
-		continue to work without it, but you won't be able to toggle bookmarks and also 
-		the current line will only be written in text and not highlighted graphically.
-	-->
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.9.5/ace.js" integrity="sha512-wju2wMXmukx2760GKQBjykvRNeRY8LdMn6XnMPJQKRF7olV229IytqfkW9Z83lrdCVA168r4Ut4paNoRxJWoag==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
+	<script src="scripts/ace/ace.js"></script>
 
 	<script src="../dist/tati.min.js"></script>
 
@@ -280,62 +275,50 @@ for(let j=0;
 		var sd = document.getElementById("step-data");
 		var ed = document.getElementById("editor");
 
-		document.getElementById("step-button").disabled = true;
-		document.getElementById("continue-button").disabled = true;
-		document.getElementById("pause-button").disabled = true;
-				
 		var tati = new Tati ( 
 			
 								function(r,c,ws) { // step function (row,column,watched variables)
 									pre.innerHTML = tati.getContextValue('reports').join('\n');
 
-									document.getElementById("pause-button").disabled = true;
-									document.getElementById("step-button").disabled = false;
-									document.getElementById("continue-button").disabled = false;
-
 									sd.innerHTML="Next Step<hr>Row : " + r + "  Column: "+  c+"\n\n";
 									sd.innerHTML+="Watched Variables<hr>" +  JSON.stringify(ws);
 
-									if(typeof(ace)!='undefined') { // is ace.js present
-										editor.session.removeMarker(marker);
-										marker = addMarker(r-1,r-1);
-									}
+									editor.session.removeMarker(marker);
+									marker = addMarker(r-1,r-1);
+
+									setTimeout( updateButtons, 20 );
+
 									return true; // tells to pause execution
 								},
 
 								function() {
-									if(tati.error===null) sd.innerHTML+=("\nSCRIPT ENDED."+"\n");
 									pre.innerHTML = tati.getContextValue('reports').join('\n');
 
-									if(typeof(ace)!='undefined') { // is ace.js present
-										editor.session.removeMarker(marker);
-									}
+									if(tati.error===null) sd.innerHTML+=("\nSCRIPT ENDED."+"\n");
 
-									document.getElementById("step-button").disabled = true;
-									document.getElementById("continue-button").disabled = true;
+									editor.session.removeMarker(marker);
+
+									setTimeout( updateButtons, 20 );
 								},
 
 								function(r,c,error_type,error_desc) {
 									let tp = error_type.toUpperCase() + " ERROR";
 									sd.innerHTML = `<div style='color:#d00'>${tp}<br>Row: ${r}, Column: ${c}<br>${error_desc}</div>`;
+									setTimeout( updateButtons, 20 );
 								},
 
 								true
 
 							);
 
-		tati.setContext({reports:[]});
+		tati.setContextVariable('reports', []);
+		//tati.setContext({reports:[]});
 
-		function start_run() 
+		function startRun() 
 		{
 			var code;
 
-			if(typeof(ace)!='undefined') { // is ace.js present
-				code = editor.getValue();
-			}
-			else { // simple text input
-				code = ed.innerHTML.replace(/&nbsp;/gm, ' ').replace(/<br>/gm, '\n').replace(/&lt;/gm, '<').replace(/&gt;/gm, '>');
-			}
+			code = editor.getValue();
 
 			sd.innerHTML = "";
 			pre.innerHTML = "Print Output\n<hr>";
@@ -343,100 +326,112 @@ for(let j=0;
 			tati.prepare(code);
 			tati.debug();
 
-			document.getElementById("step-button").disabled = false;
-			document.getElementById("continue-button").disabled = false;
-	
+			setTimeout( updateButtons, 20 );
+
 		}
 
 		function step()
 		{
-			document.getElementById("pause-button").disabled = false;
-			document.getElementById("step-button").disabled = true;
-			document.getElementById("continue-button").disabled = true;
 			setTimeout( ()=>{
 				tati.step();
+				setTimeout( updateButtons, 20 );
 			},0);
 		}
 
-		function do_continue()
+		function doContinue()
 		{
-			document.getElementById("pause-button").disabled = false;
-			document.getElementById("step-button").disabled = true;
-			document.getElementById("continue-button").disabled = true;
 			setTimeout( ()=>{
 				tati.continue();
+				setTimeout( updateButtons, 20 );
 			},0);
 		}
 
-		function pause()
+		function pause(prevent_update)
 		{
-			document.getElementById("pause-button").disabled = true;
 			setTimeout( ()=>{
 				tati.pause();
+				setTimeout( function(prevent_update) { if(!prevent_update) updateButtons(); }.bind(null,prevent_update), 20 );
 			},0);
 		}
 
 
-		function on_load()
+		async function updateButtons()
 		{
-			if(typeof(ace)!="undefined") {  // is ace.js present
 
-				editor = ace.edit("editor");
-				editor.session.setMode("ace/mode/javascript");
+			switch(await tati.getStatusAsync()) {
 
-				editor.on("guttermousedown", function(e) {
-						var target = e.domEvent.target; 
-						if (target.className.indexOf("ace_gutter-cell") == -1)
-								return; 
-						if (!editor.isFocused()) 
-								return;   
-						if (e.clientX > 35 + target.getBoundingClientRect().left) 
-								return; 
-
-						var breakpoints = e.editor.session.getBreakpoints(row, 0);
-						var row = e.getDocumentPosition().row;
-						if(typeof breakpoints[row] === typeof undefined)
-								e.editor.session.setBreakpoint(row);
-						else 
-								e.editor.session.clearBreakpoint(row);
-							e.stop();
-
-
-						// breakpoints should be in the form { 5: true, 10: true }
-
-						var breakpoints = {};
-						for(a in editor.session.getBreakpoints()) breakpoints[parseInt(a)+1]=true;
-
-						tati.setAllBreakpoints(breakpoints);
-
-					});
-
-				editor.on("change", function(e) {
+				case Tati.STOPPED:
 					document.getElementById("step-button").disabled = true;
 					document.getElementById("continue-button").disabled = true;
+					document.getElementById("pause-button").disabled = true;
+					break;
+
+				case Tati.RUNNING:
+					document.getElementById("step-button").disabled = true;
+					document.getElementById("continue-button").disabled = true;
+					document.getElementById("pause-button").disabled = false;
+					break;
+
+				case Tati.PAUSED:
+					document.getElementById("step-button").disabled = false;
+					document.getElementById("continue-button").disabled = false;
+					document.getElementById("pause-button").disabled = true;
+					break;
+
+
+			}
+
+		}
+
+		function onLoad()
+		{
+
+			editor = ace.edit("editor");
+			editor.session.setMode("ace/mode/javascript");
+
+			editor.on("guttermousedown", function(e) {
+					var target = e.domEvent.target; 
+					if (target.className.indexOf("ace_gutter-cell") == -1)
+							return; 
+					if (!editor.isFocused()) 
+							return;   
+					if (e.clientX > 35 + target.getBoundingClientRect().left) 
+							return; 
+
+					var breakpoints = e.editor.session.getBreakpoints(row, 0);
+					var row = e.getDocumentPosition().row;
+					if(typeof breakpoints[row] === typeof undefined)
+							e.editor.session.setBreakpoint(row);
+					else 
+							e.editor.session.clearBreakpoint(row);
+						e.stop();
+
+
+					// breakpoints should be in the form { 5: true, 10: true }
+
+					var breakpoints = {};
+					for(a in editor.session.getBreakpoints()) breakpoints[parseInt(a)+1]=true;
+
+					tati.setAllBreakpoints(breakpoints);
+
 				});
-			}
 
-			else { // simple text input
-				document.getElementById("ace-notice").style.display = "none";
-				document.getElementById("no-ace-notice").style.display = "block";
-				ed.onkeydown = function(e) {
-					document.getElementById("step-button").disabled = true;
-					document.getElementById("continue-button").disabled = true;
-				};
-			}
+			editor.on("change", function(e) {
+				document.getElementById("step-button").disabled = true;
+				document.getElementById("continue-button").disabled = true;
+			});
+
 		}
 
-		if(typeof(ace)!="undefined") {
-			var rng = ace.require('ace/range').Range;
-			function addMarker(start = 0,end = 0,classes ='running',line="fullLine",override = false) 
-			{
-				return editor.session.addMarker(
-						new rng(start, 0, (end === 0 ? start : end), 1), 
-						classes, line, override 
-					);
-			}
+		var rng = ace.require('ace/range').Range;
+		function addMarker(start = 0,end = 0,classes ='running',line="fullLine",override = false) 
+		{
+			return editor.session.addMarker(
+					new rng(start, 0, (end === 0 ? start : end), 1), 
+					classes, line, override 
+				);
 		}
+
 	</script>
 
 </html>
