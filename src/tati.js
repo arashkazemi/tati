@@ -127,7 +127,7 @@ class Tati
 					stop_callback=null,
 					error_callback=null,
 
-					config={ use_worker:false, 
+					config={ use_worker: false, 
 							 default_root: undefined, 
 							 use_async_prototypes: true }
 				)
