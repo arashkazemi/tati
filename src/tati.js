@@ -47,6 +47,7 @@ class Tati
 	#timer_timeout = -1;
 
 	#default_root = {};
+	#use_async_prototypes;
 
 	#run_func = null;
 	#debug_func = null;
@@ -125,15 +126,20 @@ class Tati
 	constructor(    step_callback=null,
 					stop_callback=null,
 					error_callback=null,
-					use_worker=false,
-					default_root )
+
+					config={ use_worker:false, 
+							 default_root: undefined, 
+							 use_async_prototypes: true }
+				)
 	{
 
 		var perr = Tati.error_proxy.bind(this);
 
-		if(default_root!==undefined) this.#default_root = default_root;
+		this.#use_async_prototypes = !!config.use_async_prototypes;
 
-		if(use_worker) {
+		if(config.default_root!==undefined) this.#default_root = config.default_root;
+
+		if(!!config.use_worker) {
 
 			var build_worker = function(foo) {
 				// Based on an answer on stackoverflow.com https://stackoverflow.com/a/16799132 by user @dan-man
@@ -157,7 +163,7 @@ class Tati
 						self.postMessage(
 											{
 												ev:'step',r:r,c:c,vs:{...vals},
-												ctx:self.__tati_space__.Tati.recursive_clone
+												ctx: self.__tati_space__.Tati.recursive_clone
 																(self.__tati_space__.tati.get_worker_context())
 											}
 										);
@@ -176,7 +182,7 @@ class Tati
 						self.postMessage(
 											{
 												ev:'stop',
-												ctx:self.__tati_space__.Tati.recursive_clone
+												ctx: self.__tati_space__.Tati.recursive_clone
 																(self.__tati_space__.tati.get_worker_context())
 											}
 										);
@@ -226,7 +232,9 @@ class Tati
 							self.postMessage( { ev:'context', 'ctx': await self.__tati_space__.tati.get_worker_context() } );
 						}
 						else if(e.data.func==="getTimers") {
-							self.postMessage( { ev:'timers', 'timers': await self.__tati_space__.tati.getTimers() } );
+							self.postMessage( { ev:'timers', 'timers': self.__tati_space__.Tati.recursive_clone(
+																			await self.__tati_space__.tati.getTimers() 
+																		) } );
 						}
 						else if(e.data.func==="getStatus") {
 							self.postMessage( { ev:'status', 'status': await self.__tati_space__.tati.getStatus() } );
@@ -656,6 +664,8 @@ class Tati
 		this.__get_worker_context_on_next_step__ = get_worker_context_on_callback;
 		this.#run_to_breakpoint = false;
 
+		this.#pause_timers();
+		this.#is_paused = true;
 	}
 
 
@@ -759,14 +769,14 @@ class Tati
 	* won't be necessary if only the values of context variables are
 	* changed later.
 	*
-	* Note that if `use_worker` is set to `true` in the constructor, the
-	* worker context objects are clones and are not directly accessible.
-	* So directly modifying the value of context variables won't work and
-	* you should use `setContext` or `setContextVariable` methods.
-	* Also note that the context object must be a plain object when using
-	* workers. Tati will automatically convert context variables to
-	* plain objects when using workers, which means the functions will be
-	* converted to `undefined`.
+	* Note that if `use_worker` is set to `true` in the constructor 
+	* configuration, the worker context objects are clones and are not 
+	* directly accessible. So directly modifying the value of context 
+	* variables won't work and you should use `setContext` or 
+	* `setContextVariable` methods. Also note that the context object must 
+	* be a plain object when using workers. Tati will automatically convert 
+	* context variables to plain objects when using workers, which means the 
+	* functions will be converted to `undefined`.
 	*
 	* This function is asynchronous, so you may want to use await to make
 	* sure the context is set accordingly.
@@ -893,9 +903,10 @@ class Tati
 	getTimers()
 	{
 		const ret = [];
+		const now = this.#is_paused?this.#timer_pause_time:Date.now();
 
 		for(const t of this.#timer_queue) {
-			ret.push( {type: t.repeat?"interval":"timeout", interval:t.interval, func: t.func, remaining: t.due - Date.now() } );
+			ret.push( {type: t.repeat?"interval":"timeout", interval:t.interval, func: t.func, remaining: t.due - now } );
 		}
 
 		return ret;
@@ -1327,7 +1338,7 @@ class Tati
 
 		if(t.repeat) {
 			t.due = Date.now()+t.interval;
-			this.add_timer(t);
+			this.#add_timer(t);
 		}
 
 		if(this.#timer_queue.length>0) {
@@ -1357,7 +1368,6 @@ class Tati
 
 	#pause_timers()
 	{
-
 		clearTimeout( this.#timer_timeout );
 		this.#timer_pause_time = Date.now();
 	}
