@@ -392,6 +392,8 @@ class Tati
 
 		const new_code = escodegen.generate(this.#esp).replace(/\/ __tati_template_paranthesis__/gm, "");
 
+		console.log(new_code);
+
 		this.#debug_func = eval(`(async function(${ctx}) { try{ ${new_code} } catch(e){__tati_error_proxy__(e)} })`);
 
 		if(this.#worker!==null) {
@@ -897,7 +899,10 @@ class Tati
 
 
 	/**
-	* Returns the list of working timers.
+	* Returns the list of working timers. 
+	* 
+	* Doesn't work when the code is running in worker mode. Use `getTimersAsync`
+	* for such cases.
 	*/
 
 	getTimers()
@@ -912,6 +917,11 @@ class Tati
 		return ret;
 	}
 
+
+	/**
+	* Returns the list of working timers like `getTimers` but also works when the code is running 
+	* in worker mode. Use `await` directive when calling it.
+	*/
 
 	async getTimersAsync()
 	{
@@ -929,6 +939,9 @@ class Tati
 
 	/**
 	* Returns the running status.
+	* 
+	* Doesn't work when the code is running in worker mode. Use `getStatusAsync`
+	* for such cases.
 	*/
 
 
@@ -954,6 +967,11 @@ class Tati
 		return Tati.RUNNING;
 	}
 
+
+	/**
+	* Returns the running status like `getStatus` but also works when the code is running 
+	* in worker mode. Use `await` directive when calling it.
+	*/
 
 	async getStatusAsync()
 	{
@@ -1232,7 +1250,7 @@ class Tati
 			}
 		}
 
-		if(ws!=null && a.type=="BlockStatement") ws=ws[0];
+		//if(ws!=null && a.type=="BlockStatement") ws=ws[0];
 	}
 
 
@@ -1406,34 +1424,82 @@ class Tati
 			});
 
 			wss.push({
-				"type": "ConditionalExpression",
-				"test": {
-					"type": "BinaryExpression",
-					"operator": "==",
-					"left": {
-						"type": "UnaryExpression",
-						"operator": "typeof",
-						"argument": {
-							"type": "Identifier",
-							"name": ws[i]
-						},
-						"prefix": true
-					},
-					"right": {
-						"type": "Literal",
-						"value": "undefined",
-						"raw": "'undefined'"
-					}
-				},
-				"consequent": {
-					"type": "Identifier",
-					"name": "undefined"
-				},
-				"alternate": {
-					"type": "Identifier",
-					"name": ws[i]
-				}
-			});
+  "type": "CallExpression",
+  "callee": {
+    "type": "ArrowFunctionExpression",
+    "id": null,
+    "params": [],
+    "body": {
+      "type": "BlockStatement",
+      "body": [
+        {
+          "type": "TryStatement",
+          "block": {
+            "type": "BlockStatement",
+            "body": [
+              {
+                "type": "ReturnStatement",
+                "argument": {
+                  "type": "ConditionalExpression",
+                  "test": {
+                    "type": "BinaryExpression",
+                    "operator": "===",
+                    "left": {
+                      "type": "UnaryExpression",
+                      "operator": "typeof",
+                      "argument": {
+                        "type": "Identifier",
+                        "name": ws[i]
+                      },
+                      "prefix": true
+                    },
+                    "right": {
+                      "type": "Literal",
+                      "value": "undefined",
+                      "raw": "'undefined'"
+                    }
+                  },
+                  "consequent": {
+                    "type": "Identifier",
+                    "name": "undefined"
+                  },
+                  "alternate": {
+                    "type": "Identifier",
+                    "name": ws[i]
+                  }
+                }
+              }
+            ]
+          },
+          "handler": {
+            "type": "CatchClause",
+            "param": {
+              "type": "Identifier",
+              "name": "e"
+            },
+            "body": {
+              "type": "BlockStatement",
+              "body": [
+                {
+                  "type": "ReturnStatement",
+                  "argument": {
+                    "type": "Identifier",
+                    "name": "undefined"
+                  }
+                }
+              ]
+            }
+          },
+          "finalizer": null
+        }
+      ]
+    },
+    "generator": false,
+    "expression": false,
+    "async": false
+  },
+  "arguments": []
+});
 		}
 
 		return wss;
@@ -1506,6 +1572,8 @@ class Tati
 
 		if(ws!=null) {
 			let wss = this.#template_generate_watch_args(ws);
+			console.log(ws);
+			console.log(wss);
 			res.expression.argument.callee.name="__tati_template_watch_args__";
 			res.expression.argument.arguments.push(...wss);
 		}
@@ -1561,6 +1629,8 @@ class Tati
 
 		if(ws!=null) {
 			let wss = this.#template_generate_watch_args(ws);
+			console.log(ws);
+			console.log(wss);
 			res.left.expressions[0].argument.callee.name="__tati_template_watch_args__";
 			res.left.expressions[0].argument.arguments.push(...wss);
 		}
