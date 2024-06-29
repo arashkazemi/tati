@@ -29,6 +29,8 @@
 
 const esprima = require("esprima");
 const escodegen = require("escodegen");
+const AsyncPrototypes = require("async.prototypes");
+
 
 class Tati
 {
@@ -58,7 +60,7 @@ class Tati
 
 	#breakpoints = {};
 	#context = {};
-	#masked = ["globalThis", "self"]; // the class name will also be added in constructor
+	#masked = ["globalThis", "window", "self"]; // the class name will also be added in constructor
 
 	#is_paused = false;
 	#run_to_breakpoint = false;
@@ -109,12 +111,15 @@ class Tati
 	* constructor, Tati will call it. But it will not cancel the event or stop
 	* its propagation so it doesn't interfere with any other code handling mechanism.
 	*
-	* @param {boolean} use_worker - If set, the debugger will run in a web worker,
-	* much safer but communication with it will be limited so the context should be
-	* plain object and the script won't be able to interact with any other object
+	* @param {object} config - Instance configuration. It contains the following 
+	* properties:
+	* 
+	* @param {boolean} use_worker (default: false) - If set, the debugger will run in a 
+	* web worker, much safer but communication with it will be limited so the context 
+	* should be plain object and the script won't be able to interact with any other object
 	* (like DOM) directly.
 	*
-	* @param {boolean} default_root - The `this` of the script being run. It is an empty
+	* @param {object} default_root - The `this` of the script being run. It is an empty
 	* object {} by default. It is important because it masks the Tati object or the
 	* worker that the script is being debugged in. If you want to set it to another
 	* object this is the way, but note that if `use_worker` is set to true, it will not
@@ -129,13 +134,11 @@ class Tati
 
 					config={ use_worker: false, 
 							 default_root: undefined, 
-							 use_async_prototypes: true }
+						   }
 				)
 	{
 
 		var perr = Tati.error_proxy.bind(this);
-
-		this.#use_async_prototypes = !!config.use_async_prototypes;
 
 		if(config.default_root!==undefined) this.#default_root = config.default_root;
 
@@ -300,8 +303,22 @@ class Tati
 
 
 		this.step_callback = step_callback;
-		this.stop_callback = stop_callback;
-		this.error_callback = error_callback;
+
+		this.stop_callback = function(stop_callback) {
+								if(stop_callback) stop_callback();
+								AsyncPrototypes.unregisterAll();
+								this.#is_paused = false;
+								this.#run_func = null;
+								this.#debug_func = null;
+							}.bind(this,stop_callback);
+
+		this.error_callback = function(error_callback,r,c,error_type,error_desc) {
+								if(error_callback) error_callback(r,c,error_type,error_desc);
+								AsyncPrototypes.unregisterAll();
+								this.#is_paused = false;
+								this.#run_func = null;
+								this.#debug_func = null;
+							}.bind(this,error_callback);
 
 		this.#masked.push(this.constructor.name);
 
@@ -392,8 +409,6 @@ class Tati
 
 		const new_code = escodegen.generate(this.#esp).replace(/\/ __tati_template_paranthesis__/gm, "");
 
-		console.log(new_code);
-
 		this.#debug_func = eval(`(async function(${ctx}) { try{ ${new_code} } catch(e){__tati_error_proxy__(e)} })`);
 
 		if(this.#worker!==null) {
@@ -424,6 +439,7 @@ class Tati
 		this.#is_debug = false;
 		this.error = null;
 
+		AsyncPrototypes.registerAll();
 		this.#reset_timers();
 
 		let rf = this.#run_func.bind(null,
@@ -434,7 +450,8 @@ class Tati
 							this.#set_interval.bind(this),
 							this.#clear_timeout.bind(this),
 							this.#clear_interval.bind(this),
-							...Object.values(this.#context));
+							...Object.values(this.#context),
+						);
 
 
 		if(this.is_module) {
@@ -449,13 +466,8 @@ class Tati
 				pr.then( (function() {
 
 					if(this.#timer_queue.length===0) {
-						if(this.stop_callback!==null) {
-							this.stop_callback();
-						}
+						this.stop_callback();
 					}
-
-					this.#run_func = null;
-					this.#debug_func = null;
 
 				}).bind(this) );
 
@@ -473,13 +485,8 @@ class Tati
 			pr.then( (function() {
 
 				if(this.#timer_queue.length===0) {
-					if(this.stop_callback!==null) {
-						this.stop_callback();
-					}
+					this.stop_callback();
 				}
-
-				this.#run_func = null;
-				this.#debug_func = null;
 
 			}).bind(this) );
 
@@ -516,6 +523,7 @@ class Tati
 
 		this.#run_to_breakpoint = run_to_breakpoint;
 
+		AsyncPrototypes.registerAll();
 		this.#reset_timers();
 
 		let rf = this.#debug_func.bind( null,
@@ -526,7 +534,8 @@ class Tati
 										this.#set_interval.bind(this),
 										this.#clear_timeout.bind(this),
 										this.#clear_interval.bind(this),
-										...Object.values(this.#context) );
+										...Object.values(this.#context),
+									);
 
 
 		if(this.is_module) {
@@ -539,11 +548,7 @@ class Tati
 
 				pr.then( (function() {
 					if(this.#timer_queue.length===0) {
-						if(this.stop_callback!==null) {
-							this.stop_callback();
-						}
-						this.#debug_func = null;
-						this.#run_func = null;
+						this.stop_callback();
 					}
 
 				}).bind(this) );
@@ -561,13 +566,8 @@ class Tati
 
 			pr.then( (function() {
 				if(this.#timer_queue.length===0) {
-					if(this.stop_callback!==null) {
-						this.stop_callback();
-					}
+					this.stop_callback();
 				}
-				this.#debug_func = null;
-				this.#run_func = null;
-
 			}).bind(this) );
 
 			pr.catch( (function(e) {
@@ -763,8 +763,8 @@ class Tati
 	*     k.setContext({foo:123, bar:"hello"}, [document, window]);
 	*
 	* The masked list is not necessary, and if not set, the masked list
-	* contains three predefined elements: `globalThis`, self and the class
-	* name of Tati, which is normally Tati itself.
+	* contains three predefined elements: `globalThis`, `window`, self and the
+	* class name of Tati, which is normally Tati itself.
 	*
 	* This function should be called before calling `prepare` if the keys
 	* of the context or the members of the masked list are changed. But it
@@ -1367,9 +1367,7 @@ class Tati
 			if(this.#timer_queue.length===0) {
 
 				if(this.#run_func===null && this.#debug_func===null) {
-					if(this.stop_callback!==null) {
-						this.stop_callback();
-					}
+					this.stop_callback();
 				}
 			}
 		}
@@ -1409,7 +1407,6 @@ class Tati
 		this.#timer_pause_time = undefined;
 	}
 
-
 	#template_generate_watch_args(ws)
 	{
 		if(ws.length==0) return [];
@@ -1424,82 +1421,82 @@ class Tati
 			});
 
 			wss.push({
-  "type": "CallExpression",
-  "callee": {
-    "type": "ArrowFunctionExpression",
-    "id": null,
-    "params": [],
-    "body": {
-      "type": "BlockStatement",
-      "body": [
-        {
-          "type": "TryStatement",
-          "block": {
-            "type": "BlockStatement",
-            "body": [
-              {
-                "type": "ReturnStatement",
-                "argument": {
-                  "type": "ConditionalExpression",
-                  "test": {
-                    "type": "BinaryExpression",
-                    "operator": "===",
-                    "left": {
-                      "type": "UnaryExpression",
-                      "operator": "typeof",
-                      "argument": {
-                        "type": "Identifier",
-                        "name": ws[i]
-                      },
-                      "prefix": true
-                    },
-                    "right": {
-                      "type": "Literal",
-                      "value": "undefined",
-                      "raw": "'undefined'"
-                    }
-                  },
-                  "consequent": {
-                    "type": "Identifier",
-                    "name": "undefined"
-                  },
-                  "alternate": {
-                    "type": "Identifier",
-                    "name": ws[i]
-                  }
-                }
-              }
-            ]
-          },
-          "handler": {
-            "type": "CatchClause",
-            "param": {
-              "type": "Identifier",
-              "name": "e"
-            },
-            "body": {
-              "type": "BlockStatement",
-              "body": [
-                {
-                  "type": "ReturnStatement",
-                  "argument": {
-                    "type": "Identifier",
-                    "name": "undefined"
-                  }
-                }
-              ]
-            }
-          },
-          "finalizer": null
-        }
-      ]
-    },
-    "generator": false,
-    "expression": false,
-    "async": false
-  },
-  "arguments": []
-});
+				"type": "CallExpression",
+				"callee": {
+					"type": "ArrowFunctionExpression",
+					"id": null,
+					"params": [],
+					"body": {
+						"type": "BlockStatement",
+						"body": [
+						{
+							"type": "TryStatement",
+							"block": {
+								"type": "BlockStatement",
+								"body": [
+								{
+									"type": "ReturnStatement",
+									"argument": {
+										"type": "ConditionalExpression",
+										"test": {
+											"type": "BinaryExpression",
+											"operator": "===",
+											"left": {
+												"type": "UnaryExpression",
+												"operator": "typeof",
+												"argument": {
+													"type": "Identifier",
+													"name": ws[i]
+												},
+												"prefix": true
+											},
+											"right": {
+												"type": "Literal",
+												"value": "undefined",
+												"raw": "'undefined'"
+											}
+										},
+										"consequent": {
+											"type": "Identifier",
+											"name": "undefined"
+										},
+										"alternate": {
+											"type": "Identifier",
+											"name": ws[i]
+										}
+									}
+								}
+								]
+							},
+							"handler": {
+								"type": "CatchClause",
+								"param": {
+									"type": "Identifier",
+									"name": "e"
+								},
+								"body": {
+									"type": "BlockStatement",
+									"body": [
+									{
+										"type": "ReturnStatement",
+										"argument": {
+											"type": "Identifier",
+											"name": "undefined"
+										}
+									}
+									]
+								}
+							},
+							"finalizer": null
+						}
+						]
+					},
+					"generator": false,
+					"expression": false,
+					"async": false
+				},
+				"arguments": []
+			});
 		}
 
 		return wss;
@@ -1572,8 +1569,6 @@ class Tati
 
 		if(ws!=null) {
 			let wss = this.#template_generate_watch_args(ws);
-			console.log(ws);
-			console.log(wss);
 			res.expression.argument.callee.name="__tati_template_watch_args__";
 			res.expression.argument.arguments.push(...wss);
 		}
@@ -1629,8 +1624,6 @@ class Tati
 
 		if(ws!=null) {
 			let wss = this.#template_generate_watch_args(ws);
-			console.log(ws);
-			console.log(wss);
 			res.left.expressions[0].argument.callee.name="__tati_template_watch_args__";
 			res.left.expressions[0].argument.arguments.push(...wss);
 		}

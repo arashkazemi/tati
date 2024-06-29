@@ -31,9 +31,9 @@
 	<head>
 		<meta charset="utf-8" />
 		<title>Simple Demo - Tati</title>
-		<link href='https://fonts.googleapis.com/css?family=Quicksand' rel='stylesheet' type='text/css'>
+<!-- 		<link href='https://fonts.googleapis.com/css?family=Quicksand' rel='stylesheet' type='text/css'>
 		<link href='https://fonts.googleapis.com/css?family=PT+Mono' rel='stylesheet' type='text/css'>
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha512-1sCRPdkRXhBV2PBLUdRb4tMg1w2YPf37qatUFeS7zlBy7jJI8Lf4VHwWfZZfpXtYSLy85pkm9GaYVYMfw5BC1A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css" integrity="sha512-1sCRPdkRXhBV2PBLUdRb4tMg1w2YPf37qatUFeS7zlBy7jJI8Lf4VHwWfZZfpXtYSLy85pkm9GaYVYMfw5BC1A==" crossorigin="anonymous" referrerpolicy="no-referrer" /> -->
 		<style>
 			body {
 				background: #e6e6e6;
@@ -58,7 +58,7 @@
 				margin: auto;
 			}
 			a, a:visited {
-				color: #015f92;
+				color: #012592;
 				background: #fff6;
 				padding: 8px 10px;
 				border-radius: 5px;
@@ -276,7 +276,6 @@ for(let j=0;
 
 									sd.innerHTML="Next Step<hr>Row : " + r + "  Column: "+  c+"\n\n";
 									sd.innerHTML+="Watched Variables<hr>" +  JSON.stringify(ws);
-
 									editor.session.removeMarker(marker);
 									marker = addMarker(r-1,r-1);
 
@@ -294,6 +293,7 @@ for(let j=0;
 								},
 
 								function(r,c,error_type,error_desc) {
+									console.log(arguments)
 									let tp = error_type.toUpperCase() + " ERROR";
 									sd.innerHTML = `<div style='color:#d00'>${tp}<br>Row: ${r}, Column: ${c}<br>${error_desc}</div>`;
 									setTimeout( updateButtons, 20 );

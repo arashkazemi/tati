@@ -33,7 +33,7 @@
   ],
   "license": "BSD-2-Clause",
   "dependencies": {
-    "async.prototypes": "^1.0.0",
+    "async.prototypes": "^1.0.2",
     "escodegen": "^2.0.0",
     "esprima": "^4.0.1"
   },
