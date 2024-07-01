@@ -28,7 +28,7 @@
 
 <header>
     
-        <h2><span class="attribs"><span class="type-signature"></span></span>Tati<span class="signature">(step_callback, stop_callback, error_callback, config, use_worker, default_root, use_async_prototypes)</span><span class="type-signature"></span></h2>
+        <h2><span class="attribs"><span class="type-signature"></span></span>Tati<span class="signature">(step_callback, stop_callback, error_callback, config, use_worker, default_root)</span><span class="type-signature"></span></h2>
         
     
 </header>
@@ -41,7 +41,7 @@
     
 
     
-    <h4 class="name" id="Tati"><span class="type-signature"></span>new Tati<span class="signature">(step_callback, stop_callback, error_callback, config, use_worker, default_root, use_async_prototypes)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="Tati"><span class="type-signature"></span>new Tati<span class="signature">(step_callback, stop_callback, error_callback, config, use_worker, default_root)</span><span class="type-signature"></span></h4>
     
 
     
@@ -279,37 +279,6 @@ work as expected because of the access limitations.</p></td>
         </tr>
 
     
-
-        <tr>
-            
-                <td class="name"><code>use_async_prototypes</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last"><p>(default: true) - This is to make sure
-array prototype functions work as expected in an asynchronous execution model,
-and overrides their definition. It is probably safe and is tested well, but affects
-even outside the Tati environment while debugging, so you can disable it if necessary.
-For more information on this see the documentation of npm package <code>async.prototypes</code>.</p></td>
-        </tr>
-
-    
     </tbody>
 </table>
 
@@ -347,7 +316,7 @@ For more information on this see the documentation of npm package <code>async.pr
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line135">line 135</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line133">line 133</a>
     </li></ul></dd>
     
 
@@ -443,7 +412,7 @@ for such cases.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line965">line 965</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line964">line 964</a>
     </li></ul></dd>
     
 
@@ -523,7 +492,7 @@ for such cases.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line764">line 764</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line763">line 763</a>
     </li></ul></dd>
     
 
@@ -660,7 +629,7 @@ for such cases.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line750">line 750</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line749">line 749</a>
     </li></ul></dd>
     
 
@@ -826,7 +795,7 @@ the process.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line705">line 705</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line692">line 692</a>
     </li></ul></dd>
     
 
@@ -973,7 +942,7 @@ reaching a breakpoint.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line638">line 638</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line625">line 625</a>
     </li></ul></dd>
     
 
@@ -1121,7 +1090,144 @@ until reaching a breakpoint. If false, it will step line by line.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line520">line 520</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line515">line 515</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="getCode"><span class="type-signature"></span>getCode<span class="signature">(line)</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>Returns the last prepared code.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>line</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">integer</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The breakpoint line.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line705">line 705</a>
     </li></ul></dd>
     
 
@@ -1209,7 +1315,7 @@ until reaching a breakpoint. If false, it will step line by line.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line883">line 883</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line882">line 882</a>
     </li></ul></dd>
     
 
@@ -1352,7 +1458,7 @@ plain objects. See also <a href="Tati.html#getWorkerContext">Tati#getWorkerConte
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line874">line 874</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line873">line 873</a>
     </li></ul></dd>
     
 
@@ -1441,7 +1547,7 @@ in worker mode. Use <code>await</code> directive when calling it.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line993">line 993</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line992">line 992</a>
     </li></ul></dd>
     
 
@@ -1531,7 +1637,7 @@ for such cases.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line925">line 925</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line924">line 924</a>
     </li></ul></dd>
     
 
@@ -1620,7 +1726,7 @@ in worker mode. Use <code>await</code> directive when calling it.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line943">line 943</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line942">line 942</a>
     </li></ul></dd>
     
 
@@ -1716,7 +1822,7 @@ with an await directive.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line902">line 902</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line901">line 901</a>
     </li></ul></dd>
     
 
@@ -1870,7 +1976,7 @@ or external libraries.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line676">line 676</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line663">line 663</a>
     </li></ul></dd>
     
 
@@ -2111,7 +2217,7 @@ it yet and therefore raises a parser error exception.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line352">line 352</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line354">line 354</a>
     </li></ul></dd>
     
 
@@ -2201,7 +2307,7 @@ the environment of the two debug/run procedures are the same.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line430">line 430</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line434">line 434</a>
     </li></ul></dd>
     
 
@@ -2291,7 +2397,7 @@ and the breakpoint is only set if the value is exactly true.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line734">line 734</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line733">line 733</a>
     </li></ul></dd>
     
 
@@ -2428,7 +2534,7 @@ and the breakpoint is only set if the value is exactly true.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line718">line 718</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line717">line 717</a>
     </li></ul></dd>
     
 
@@ -2479,8 +2585,8 @@ given in a list of strings.</p>
 <pre><code>k.setContext({foo:123, bar:&quot;hello&quot;}, [document, window]);
 </code></pre>
 <p>The masked list is not necessary, and if not set, the masked list
-contains three predefined elements: <code>globalThis</code>, self and the class
-name of Tati, which is normally Tati itself.</p>
+contains three predefined elements: <code>globalThis</code>, <code>window</code>, self and the
+class name of Tati, which is normally Tati itself.</p>
 <p>This function should be called before calling <code>prepare</code> if the keys
 of the context or the members of the masked list are changed. But it
 won't be necessary if only the values of context variables are
@@ -2612,7 +2718,7 @@ masked to <code>undefined</code>.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line810">line 810</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line809">line 809</a>
     </li></ul></dd>
     
 
@@ -2778,7 +2884,7 @@ be cloned to a plain object.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line850">line 850</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line849">line 849</a>
     </li></ul></dd>
     
 
@@ -2930,7 +3036,7 @@ if the user needs to check the new context values, they should call
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line612">line 612</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line599">line 599</a>
     </li></ul></dd>
     
 

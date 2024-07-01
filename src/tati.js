@@ -78,6 +78,8 @@ class Tati
 
 	#is_module = false;
 
+	#code;
+
 	/**
 	* Creates an instance of Tati.
 	* There can be multiple instances and each can be controlled separately.
@@ -357,6 +359,8 @@ class Tati
 		}
 
 		this.#prepare_index++;
+		this.#code = code;
+
 		this.error = null;
 		this.#run_func = null;
 		this.#debug_func = null;
@@ -689,6 +693,18 @@ class Tati
 	{
 		this.#ui_refresh_steps = ui_refresh_steps;
 		this.#ui_refresh_time = ui_refresh_time; // ms
+	}
+
+
+	/**
+	* Returns the last prepared code.
+	*
+	* @param {integer} line The breakpoint line.
+	*/
+
+	getCode(line)
+	{
+		return this.#code;
 	}
 
 

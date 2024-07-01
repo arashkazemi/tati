@@ -57,6 +57,8 @@
 
 const esprima = require("esprima");
 const escodegen = require("escodegen");
+const AsyncPrototypes = require("async.prototypes");
+
 
 class Tati
 {
@@ -86,7 +88,7 @@ class Tati
 
 	#breakpoints = {};
 	#context = {};
-	#masked = ["globalThis", "self"]; // the class name will also be added in constructor
+	#masked = ["globalThis", "window", "self"]; // the class name will also be added in constructor
 
 	#is_paused = false;
 	#run_to_breakpoint = false;
@@ -103,6 +105,8 @@ class Tati
 	#is_debug = false;
 
 	#is_module = false;
+
+	#code;
 
 	/**
 	* Creates an instance of Tati.
@@ -151,12 +155,6 @@ class Tati
 	* object this is the way, but note that if `use_worker` is set to true, it will not
 	* work as expected because of the access limitations.
 	*
-	* @param {boolean} use_async_prototypes (default: true) - This is to make sure
-	* array prototype functions work as expected in an asynchronous execution model,
-	* and overrides their definition. It is probably safe and is tested well, but affects 
-	* even outside the Tati environment while debugging, so you can disable it if necessary. 
-	* For more information on this see the documentation of npm package `async.prototypes`.
-	*
 	*/
 
 
@@ -166,13 +164,11 @@ class Tati
 
 					config={ use_worker: false, 
 							 default_root: undefined, 
-							 use_async_prototypes: true }
+						   }
 				)
 	{
 
 		var perr = Tati.error_proxy.bind(this);
-
-		this.#use_async_prototypes = !!config.use_async_prototypes;
 
 		if(config.default_root!==undefined) this.#default_root = config.default_root;
 
@@ -339,13 +335,19 @@ class Tati
 		this.step_callback = step_callback;
 
 		this.stop_callback = function(stop_callback) {
-								stop_callback();
-								this.#unhook_async_constructor();
+								if(stop_callback) stop_callback();
+								AsyncPrototypes.unregisterAll();
+								this.#is_paused = false;
+								this.#run_func = null;
+								this.#debug_func = null;
 							}.bind(this,stop_callback);
 
-		this.error_callback = function(error_callback) {
-								error_callback();
-								this.#unhook_async_constructor();
+		this.error_callback = function(error_callback,r,c,error_type,error_desc) {
+								if(error_callback) error_callback(r,c,error_type,error_desc);
+								AsyncPrototypes.unregisterAll();
+								this.#is_paused = false;
+								this.#run_func = null;
+								this.#debug_func = null;
 							}.bind(this,error_callback);
 
 		this.#masked.push(this.constructor.name);
@@ -385,6 +387,8 @@ class Tati
 		}
 
 		this.#prepare_index++;
+		this.#code = code;
+
 		this.error = null;
 		this.#run_func = null;
 		this.#debug_func = null;
@@ -467,7 +471,7 @@ class Tati
 		this.#is_debug = false;
 		this.error = null;
 
-		this.#hook_async_constructor();
+		AsyncPrototypes.registerAll();
 		this.#reset_timers();
 
 		let rf = this.#run_func.bind(null,
@@ -478,7 +482,8 @@ class Tati
 							this.#set_interval.bind(this),
 							this.#clear_timeout.bind(this),
 							this.#clear_interval.bind(this),
-							...Object.values(this.#context));
+							...Object.values(this.#context),
+						);
 
 
 		if(this.is_module) {
@@ -493,13 +498,8 @@ class Tati
 				pr.then( (function() {
 
 					if(this.#timer_queue.length===0) {
-						if(this.stop_callback!==null) {
-							this.stop_callback();
-						}
+						this.stop_callback();
 					}
-
-					this.#run_func = null;
-					this.#debug_func = null;
 
 				}).bind(this) );
 
@@ -517,13 +517,8 @@ class Tati
 			pr.then( (function() {
 
 				if(this.#timer_queue.length===0) {
-					if(this.stop_callback!==null) {
-						this.stop_callback();
-					}
+					this.stop_callback();
 				}
-
-				this.#run_func = null;
-				this.#debug_func = null;
 
 			}).bind(this) );
 
@@ -560,7 +555,7 @@ class Tati
 
 		this.#run_to_breakpoint = run_to_breakpoint;
 
-		this.#hook_async_constructor();
+		AsyncPrototypes.registerAll();
 		this.#reset_timers();
 
 		let rf = this.#debug_func.bind( null,
@@ -571,7 +566,8 @@ class Tati
 										this.#set_interval.bind(this),
 										this.#clear_timeout.bind(this),
 										this.#clear_interval.bind(this),
-										...Object.values(this.#context) );
+										...Object.values(this.#context),
+									);
 
 
 		if(this.is_module) {
@@ -584,11 +580,7 @@ class Tati
 
 				pr.then( (function() {
 					if(this.#timer_queue.length===0) {
-						if(this.stop_callback!==null) {
-							this.stop_callback();
-						}
-						this.#debug_func = null;
-						this.#run_func = null;
+						this.stop_callback();
 					}
 
 				}).bind(this) );
@@ -606,13 +598,8 @@ class Tati
 
 			pr.then( (function() {
 				if(this.#timer_queue.length===0) {
-					if(this.stop_callback!==null) {
-						this.stop_callback();
-					}
+					this.stop_callback();
 				}
-				this.#debug_func = null;
-				this.#run_func = null;
-
 			}).bind(this) );
 
 			pr.catch( (function(e) {
@@ -738,6 +725,18 @@ class Tati
 
 
 	/**
+	* Returns the last prepared code.
+	*
+	* @param {integer} line The breakpoint line.
+	*/
+
+	getCode(line)
+	{
+		return this.#code;
+	}
+
+
+	/**
 	* Sets a breakpoint on the given line.
 	*
 	* @param {integer} line The breakpoint line.
@@ -808,8 +807,8 @@ class Tati
 	*     k.setContext({foo:123, bar:"hello"}, [document, window]);
 	*
 	* The masked list is not necessary, and if not set, the masked list
-	* contains three predefined elements: `globalThis`, self and the class
-	* name of Tati, which is normally Tati itself.
+	* contains three predefined elements: `globalThis`, `window`, self and the
+	* class name of Tati, which is normally Tati itself.
 	*
 	* This function should be called before calling `prepare` if the keys
 	* of the context or the members of the masked list are changed. But it
@@ -1412,9 +1411,7 @@ class Tati
 			if(this.#timer_queue.length===0) {
 
 				if(this.#run_func===null &amp;&amp; this.#debug_func===null) {
-					if(this.stop_callback!==null) {
-						this.stop_callback();
-					}
+					this.stop_callback();
 				}
 			}
 		}
@@ -1454,18 +1451,6 @@ class Tati
 		this.#timer_pause_time = undefined;
 	}
 
-
-	#hook_async_constructor()
-	{
-		console.log("HOOKING")
-	}
-
-	#unhook_async_constructor()
-	{
-		console.log("UNHOOKING")
-	}
-
-
 	#template_generate_watch_args(ws)
 	{
 		if(ws.length==0) return [];
@@ -1480,82 +1465,82 @@ class Tati
 			});
 
 			wss.push({
-  "type": "CallExpression",
-  "callee": {
-    "type": "ArrowFunctionExpression",
-    "id": null,
-    "params": [],
-    "body": {
-      "type": "BlockStatement",
-      "body": [
-        {
-          "type": "TryStatement",
-          "block": {
-            "type": "BlockStatement",
-            "body": [
-              {
-                "type": "ReturnStatement",
-                "argument": {
-                  "type": "ConditionalExpression",
-                  "test": {
-                    "type": "BinaryExpression",
-                    "operator": "===",
-                    "left": {
-                      "type": "UnaryExpression",
-                      "operator": "typeof",
-                      "argument": {
-                        "type": "Identifier",
-                        "name": ws[i]
-                      },
-                      "prefix": true
-                    },
-                    "right": {
-                      "type": "Literal",
-                      "value": "undefined",
-                      "raw": "'undefined'"
-                    }
-                  },
-                  "consequent": {
-                    "type": "Identifier",
-                    "name": "undefined"
-                  },
-                  "alternate": {
-                    "type": "Identifier",
-                    "name": ws[i]
-                  }
-                }
-              }
-            ]
-          },
-          "handler": {
-            "type": "CatchClause",
-            "param": {
-              "type": "Identifier",
-              "name": "e"
-            },
-            "body": {
-              "type": "BlockStatement",
-              "body": [
-                {
-                  "type": "ReturnStatement",
-                  "argument": {
-                    "type": "Identifier",
-                    "name": "undefined"
-                  }
-                }
-              ]
-            }
-          },
-          "finalizer": null
-        }
-      ]
-    },
-    "generator": false,
-    "expression": false,
-    "async": false
-  },
-  "arguments": []
-});
+				"type": "CallExpression",
+				"callee": {
+					"type": "ArrowFunctionExpression",
+					"id": null,
+					"params": [],
+					"body": {
+						"type": "BlockStatement",
+						"body": [
+						{
+							"type": "TryStatement",
+							"block": {
+								"type": "BlockStatement",
+								"body": [
+								{
+									"type": "ReturnStatement",
+									"argument": {
+										"type": "ConditionalExpression",
+										"test": {
+											"type": "BinaryExpression",
+											"operator": "===",
+											"left": {
+												"type": "UnaryExpression",
+												"operator": "typeof",
+												"argument": {
+													"type": "Identifier",
+													"name": ws[i]
+												},
+												"prefix": true
+											},
+											"right": {
+												"type": "Literal",
+												"value": "undefined",
+												"raw": "'undefined'"
+											}
+										},
+										"consequent": {
+											"type": "Identifier",
+											"name": "undefined"
+										},
+										"alternate": {
+											"type": "Identifier",
+											"name": ws[i]
+										}
+									}
+								}
+								]
+							},
+							"handler": {
+								"type": "CatchClause",
+								"param": {
+									"type": "Identifier",
+									"name": "e"
+								},
+								"body": {
+									"type": "BlockStatement",
+									"body": [
+									{
+										"type": "ReturnStatement",
+										"argument": {
+											"type": "Identifier",
+											"name": "undefined"
+										}
+									}
+									]
+								}
+							},
+							"finalizer": null
+						}
+						]
+					},
+					"generator": false,
+					"expression": false,
+					"async": false
+				},
+				"arguments": []
+			});
 		}
 
 		return wss;
