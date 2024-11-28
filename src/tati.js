@@ -27,8 +27,10 @@
 */
 
 
-const esprima = require("esprima");
-const escodegen = require("escodegen");
+const acorn = require("acorn");
+const acornjsx = require("acorn-jsx");
+
+const astring = require("astring");
 const AsyncPrototypes = require("async.prototypes");
 
 
@@ -49,14 +51,13 @@ class Tati
 	#timer_timeout = -1;
 
 	#default_root = {};
-	#use_async_prototypes;
+	#jsx_handler = null;
 
 	#run_func = null;
 	#debug_func = null;
 
 	#esp = null;
 	#debug_resolve = null;
-	#worker = null;
 
 	#breakpoints = {};
 	#context = {};
@@ -66,12 +67,6 @@ class Tati
 	#run_to_breakpoint = false;
 	#step_loop_args = null;
 
-	#get_worker_status_resolve = null;
-	#get_worker_timers_resolve = null;
-	#get_worker_context_resolve = null;
-	#set_worker_context_resolve = null;
-	__get_worker_context_on_next_step__ = true;
-
 	#ui_refresh_counter = 0;
 	#prepare_index = 0;
 	#is_debug = false;
@@ -79,6 +74,15 @@ class Tati
 	#is_module = false;
 
 	#code;
+	code_rows;
+	code_cols;
+
+
+	// these are internal handles used for development only, may be changed anytime in the future.
+	static acorn = acorn;
+	static acornjsx = acornjsx;
+	static astring = astring;
+
 
 	/**
 	* Creates an instance of Tati.
@@ -116,17 +120,11 @@ class Tati
 	* @param {object} config - Instance configuration. It contains the following 
 	* properties:
 	* 
-	* @param {boolean} use_worker (default: false) - If set, the debugger will run in a 
-	* web worker, much safer but communication with it will be limited so the context 
-	* should be plain object and the script won't be able to interact with any other object
-	* (like DOM) directly.
-	*
 	* @param {object} default_root - The `this` of the script being run. It is an empty
-	* object {} by default. It is important because it masks the Tati object or the
-	* worker that the script is being debugged in. If you want to set it to another
-	* object this is the way, but note that if `use_worker` is set to true, it will not
-	* work as expected because of the access limitations.
-	*
+	* object {} by default. It is important because it masks the Tati object. 
+	* 
+	* (`createElement( type, props, ...children)`).
+	* 
 	*/
 
 
@@ -134,166 +132,19 @@ class Tati
 					stop_callback=null,
 					error_callback=null,
 
-					config={ use_worker: false, 
-							 default_root: undefined, 
+					config={ 
+							 default_root: undefined,
+							 jsx_handler: false
 						   }
 				)
 	{
 
+		Tati.acorn = acorn.Parser.extend( acornjsx () )
+
 		var perr = Tati.error_proxy.bind(this);
 
 		if(config.default_root!==undefined) this.#default_root = config.default_root;
-
-		if(!!config.use_worker) {
-
-			var build_worker = function(foo) {
-				// Based on an answer on stackoverflow.com https://stackoverflow.com/a/16799132 by user @dan-man
-
-				var str = foo.toString().match(/^\s*function\s*\(\s*\)\s*\{(([\s\S](?!\}$))*[\s\S])/)[1];
-
-				if( typeof(Worker_threads)!=="undefined" ) {
-					return new Worker_threads.Worker(window.URL.createObjectURL( new Blob([str],{type:'text/javascript'})) );
-				}
-
-				return new Worker(window.URL.createObjectURL( new Blob([str],{type:'text/javascript'})) );
-			}
-
-			this.#worker = build_worker( function() {
-
-				self.__tati_space__ = {};
-				self.__tati_space__.resolver = null;
-
-				self.__tati_space__.step_callback = async function(r,c,vals) {
-					if(self.__tati_space__.tati.__get_worker_context_on_next_step__) {
-						self.postMessage(
-											{
-												ev:'step',r:r,c:c,vs:{...vals},
-												ctx: self.__tati_space__.Tati.recursive_clone
-																(self.__tati_space__.tati.get_worker_context())
-											}
-										);
-					}
-					else {
-						self.postMessage( {ev:'step',r:r,c:c,vs:{...vals}} );
-					}
-
-					const msg_promise = new Promise((resolve) => self.__tati_space__.resolver = resolve);
-
-					return await msg_promise;
-				}
-
-				self.__tati_space__.stop_callback = function() {
-					if(self.__tati_space__.tati.__get_worker_context_on_next_step__) {
-						self.postMessage(
-											{
-												ev:'stop',
-												ctx: self.__tati_space__.Tati.recursive_clone
-																(self.__tati_space__.tati.get_worker_context())
-											}
-										);
-					}
-					else {
-						self.postMessage( {ev:'stop'} );
-					}
-				}
-
-				self.__tati_space__.error_callback = function(r,c,t,d) {
-					self.postMessage({ev:'err',r:r,c:c,t:t,d:d});
-				}
-
-
-				self.__tati_space__.tati = null;
-
-				self.onmessage = async function(e) {
-
-					if(self.__tati_space__.tati===null) {
-						eval(e.data+";self.__tati_space__.Tati = Tati;");
-
-						var Tati = self.__tati_space__.Tati;
-
-						self.__tati_space__.tati = new Tati(self.__tati_space__.step_callback,
-																								self.__tati_space__.stop_callback,
-																								self.__tati_space__.error_callback);
-						self.__tati_space__.onerror = self.__tati_space__.Tati.error_proxy.bind(self.__tati_space__.tati);
-					}
-					else {
-						var Tati = self.__tati_space__.Tati;
-
-						if(e.data.func==="set-funcs") {
-							if(e.data.args===null) {
-								self.__tati_space__.tati.set_worker_funcs(null,null);
-							}
-							else {
-								self.__tati_space__.tati.set_worker_funcs(
-													eval("("+e.data.args[0]+")"),
-													eval("("+e.data.args[1]+")")
-												);
-							}
-						}
-						else if(e.data.func==="stepResponse") {
-							self.__tati_space__.resolver(e.data.args[0]);
-						}
-						else if(e.data.func==="getWorkerContext") {
-							self.postMessage( { ev:'context', 'ctx': await self.__tati_space__.tati.get_worker_context() } );
-						}
-						else if(e.data.func==="getTimers") {
-							self.postMessage( { ev:'timers', 'timers': self.__tati_space__.Tati.recursive_clone(
-																			await self.__tati_space__.tati.getTimers() 
-																		) } );
-						}
-						else if(e.data.func==="getStatus") {
-							self.postMessage( { ev:'status', 'status': await self.__tati_space__.tati.getStatus() } );
-						}
-						else {
-							self.__tati_space__.tati[e.data.func](...e.data.args);
-							self.postMessage( { ev:'context', 'ctx': await self.__tati_space__.tati.get_worker_context() } );
-						}
-					}
-				};
-
-			});
-
-			this.#worker.onmessage = (e) => {
-				if(e.data.ev==="step") {
-					if(e.data.ctx!==undefined) {
-						this.#context = e.data.ctx;
-					}
-					this.#worker.postMessage(
-							{
-								func:"stepResponse",
-								args: [this.step_callback(e.data.r, e.data.c, e.data.vs)]
-							}
-						);
-				}
-				else if(e.data.ev==="getWorkerContext") {
-					this.#get_worker_context_resolve(e.data.ctx);
-				}
-				else if(e.data.ev==="context") {
-					this.#set_worker_context_resolve(e.data.status);
-				}
-				else if(e.data.ev==="timers") {
-					this.#get_worker_timers_resolve(e.data.timers);
-				}
-				else if(e.data.ev==="status") {
-					this.#get_worker_status_resolve(e.data.status);
-				}
-				else if(e.data.ev==="stop") {
-					if(e.data.ctx!==undefined) {
-						this.#context = e.data.ctx;
-					}
-					if(this.stop_callback!==null) {
-						this.stop_callback();
-					}
-				}
-				else if(e.data.ev==="err") {
-					this.error_callback(e.data.r, e.data.c, e.data.t, e.data.d);
-				}
-
-			}
-
-			this.#worker.onerror = perr;
-			this.#worker.postMessage(Tati.toString());
-		}
+		if(!!config.jsx_handler) this.#jsx_handler = config.jsx_handler;
 
 
 		if(this.#__is_browser__()) {
@@ -307,7 +158,7 @@ class Tati
 		this.step_callback = step_callback;
 
 		this.stop_callback = function(stop_callback) {
-								if(stop_callback) stop_callback();
+								if(stop_callback) stop_callback.call(this);
 								AsyncPrototypes.unregisterAll();
 								this.#is_paused = false;
 								this.#run_func = null;
@@ -315,7 +166,7 @@ class Tati
 							}.bind(this,stop_callback);
 
 		this.error_callback = function(error_callback,r,c,error_type,error_desc) {
-								if(error_callback) error_callback(r,c,error_type,error_desc);
+								if(error_callback) error_callback.call(this, r,c,error_type,error_desc);
 								AsyncPrototypes.unregisterAll();
 								this.#is_paused = false;
 								this.#run_func = null;
@@ -346,15 +197,15 @@ class Tati
 	* an unexpected token error in parse time. Note that imports cannot be
 	* executed, because normal import statements must be the top-level of a module
 	* and this cannot be the case when tati is wrapping the code. Also `import()`
-	* function is supported by Tati, but unfortunately Esprima doesn't support
+	* function is supported by Tati, but unfortunately acorn doesn't support
 	* it yet and therefore raises a parser error exception.
 	*
 	*/
 
-	prepare( code, watch_locals=true, step_loop_args=true, is_module=false )
+	prepare( code, watch_locals=true, step_loop_args=true, is_module=false, ascyncize_direct_run=true )
 	{
 
-		if(is_module && this.#worker!==null && this.#__is_browser__()) {
+		if(is_module && this.#__is_browser__()) {
 			throw "modules can't be created dynamically in browser workers.";
 		}
 
@@ -372,21 +223,34 @@ class Tati
 		var ws = watch_locals ? [[]] : null;
 
 		try {
+			let opts = {loc:true};
+
 			if(is_module) {
-				this.#esp = esprima.parse( code, {loc:true, sourceType: 'module'} );
+				opts.sourceType = 'module';
 			}
-			else {
-				this.#esp = esprima.parse( code, {loc:true} );
+
+			if(this.#jsx_handler) {
+				opts.jsx = true;
 			}
+
+			this.#esp = acorn.parse( code, opts );
+
+			if(ascyncize_direct_run) {
+				this.#asyncize(this.#esp);
+			}
+
+			if(this.#jsx_handler) {
+				let tesp = structuredClone(this.#esp);
+				//this.#transpile_jsx(this.#esp);
+				code = astring.generate(this.#esp);
+				this.#esp = tesp;
+			}
+
 		}
 		catch(e) {
 
-			if(this.#worker!==null) {
-				this.#worker.postMessage({"func":"set-funcs", "args":null});
-			}
-
 			if(this.error_callback!=null) {
-				this.error_callback(e.lineNumber, e.column, "parse", e.description);
+				this.error_callback(e.lineNumber, e.column, "parse", e.message);
 			}
 			this.error = e;
 
@@ -396,6 +260,7 @@ class Tati
 
 		let ctx = [ "__tati_template_watch_args__",
 					"__tati_template_no_watch_args__",
+					"__tati_jsx_create_element__",
 					"__tati_error_proxy__",
 					"setTimeout",
 					"setInterval",
@@ -406,21 +271,25 @@ class Tati
 					...this.#masked ].join(',');
 
 
-		this.#run_func = eval(`(async function(${ctx}) { ${code} })`);
 
-		this.#asyncize(this.#esp);
+		if(!ascyncize_direct_run) { 
+			// if true it is asyncized sooner for both run and debug mode.
+			this.#asyncize(this.#esp);
+		}
+
 		this.#tatize(this.#esp, ws);
+		//this.#transpile_jsx(this.#esp);
 
-		const new_code = escodegen.generate(this.#esp).replace(/\/ __tati_template_paranthesis__/gm, "");
+		const new_code = astring.generate(this.#esp).replace(/\/ __tati_template_paranthesis__/gm, "");
 
 		this.#debug_func = eval(`(async function(${ctx}) { try{ ${new_code} } catch(e){__tati_error_proxy__(e)} })`);
 
-		if(this.#worker!==null) {
-			this.#worker.postMessage({"func":"set-funcs", "args":[this.#run_func.toString(), this.#debug_func.toString()]});
-		}
+		this.#run_func = eval(`(async function(${ctx}) { ${code} })`);
 
 		this.#run_func = this.#run_func.bind(this.#default_root);
 		this.#debug_func = this.#debug_func.bind(this.#default_root);
+
+		this.#sweep_lines();
 
 	};
 
@@ -433,11 +302,6 @@ class Tati
 
 	run()
 	{
-		if(this.#worker!==null) {
-			this.#worker.postMessage({"func":"run", "args":[...arguments]});
-			return;
-		}
-
 		if(this.#run_func==null) return;
 
 		this.#is_debug = false;
@@ -447,13 +311,14 @@ class Tati
 		this.#reset_timers();
 
 		let rf = this.#run_func.bind(null,
-							this.#template_watch_args.bind(this,this.#prepare_index),
-							this.#template_no_watch_args.bind(this,this.#prepare_index),
-							Tati.error_proxy.bind(this),
-							this.#set_timeout.bind(this),
-							this.#set_interval.bind(this),
-							this.#clear_timeout.bind(this),
-							this.#clear_interval.bind(this),
+							undefined,
+							undefined,
+							this.#jsx_create_element.bind(this),
+							undefined,
+							setTimeout,
+							setInterval,
+							clearTimeout,
+							clearInterval,
 							...Object.values(this.#context),
 						);
 
@@ -515,11 +380,6 @@ class Tati
 	debug(run_to_breakpoint=false)
 	{
 
-		if(this.#worker!==null) {
-			this.#worker.postMessage({"func":"debug", "args":[...arguments]});
-			return;
-		}
-
 		if(this.#debug_func==null) return;
 
 		this.#is_debug = true;
@@ -533,6 +393,7 @@ class Tati
 		let rf = this.#debug_func.bind( null,
 										this.#template_watch_args.bind(this,this.#prepare_index),
 										this.#template_no_watch_args.bind(this,this.#prepare_index),
+										this.#jsx_create_element.bind(this),
 										Tati.error_proxy.bind(this),
 										this.#set_timeout.bind(this),
 										this.#set_interval.bind(this),
@@ -586,25 +447,10 @@ class Tati
 	/**
 	* Steps to the next line/expression.
 	* It will call the `step_callback` that was given to constructor.
-	*
-	* @param {boolean} get_worker_context_on_callback When using workers,
-	* Tati updates the context values before calling the `step_callback`,
-	* unless the `get_worker_context_on_callback` parameter is set to `false`.
-	* It may be needed when the context variables are big and transmitting them
-	* between the user instance and the worker are intensive. In such cases,
-	* if the user needs to check the new context values, they should call
-	* {@link Tati#getWorkerContext} before getting the context.
 	*/
 
-	step(get_worker_context_on_callback=true)
+	step()
 	{
-		if(this.#worker!==null) {
-			this.#worker.postMessage({"func":"step", "args":[...arguments]});
-			return;
-		}
-
-		this.__get_worker_context_on_next_step__ = get_worker_context_on_callback;
-
 		this.#run_to_breakpoint = false;
 
 		//if(this.#debug_func!==null && this.#debug_resolve!=null) {
@@ -618,19 +464,10 @@ class Tati
 	* Runs to the next breakpoint or end.
 	* It will call the `step_callback` that was given to constructor on
 	* reaching a breakpoint.
-	*
-	* @param {boolean} get_worker_context_on_callback see {@link Tati#step}
 	*/
 
-	continue(get_worker_context_on_callback=true)
+	continue()
 	{
-		if(this.#worker!==null) {
-			this.#worker.postMessage({"func":"continue", "args":[...arguments]});
-			return;
-		}
-
-		this.__get_worker_context_on_next_step__ = get_worker_context_on_callback;
-
 		this.#run_to_breakpoint = true;
 
 		this.#is_paused = false; 
@@ -656,18 +493,10 @@ class Tati
 	* Also note that Tati can only pause inside the given script and cannot
 	* enter the called functions that are defined elsewhere, i.e. native functions
 	* or external libraries.
-	*
-	* @param {boolean} get_worker_context_on_callback see {@link Tati#step}
 	*/
 
-	pause(get_worker_context_on_callback=true)
+	pause()
 	{
-		if(this.#worker!==null) {
-			this.#worker.postMessage({"func":"pause", "args":[...arguments]});
-			return;
-		}
-
-		this.__get_worker_context_on_next_step__ = get_worker_context_on_callback;
 		this.#run_to_breakpoint = false;
 
 		this.#pause_timers();
@@ -698,13 +527,11 @@ class Tati
 
 	/**
 	* Returns the last prepared code.
-	*
-	* @param {integer} line The breakpoint line.
 	*/
 
-	getCode(line)
+	getCode()
 	{
-		return this.#code;
+		return ""+this.#code;
 	}
 
 
@@ -716,27 +543,19 @@ class Tati
 
 	setBreakpoint(line)
 	{
-		if(this.#worker!==null) {
-			this.#worker.postMessage({"func":"setBreakpoint", "args":[...arguments]});
-			return;
-		}
-
 		this.#breakpoints[''+line] = true;
 	}
 
 	/**
-	* Sets all breakpoints. Breakpoints should be in the form of
-	* { 5: true, 10: true } where the keys are the line numbers
+	* Sets all breakpoints. 
+	*
+	* @param {integer} bps The breakpoint line. Breakpoints should be in the 
+	* form of { 5: true, 10: true } where the keys are the line numbers
 	* and the breakpoint is only set if the value is exactly true.
 	*/
 
 	setAllBreakpoints(bps)
 	{
-		if(this.#worker!==null) {
-			this.#worker.postMessage({"func":"setAllBreakpoints", "args":[...arguments]});
-			return;
-		}
-
 		this.#breakpoints = bps;
 	}
 
@@ -748,11 +567,6 @@ class Tati
 
 	clearBreakpoint(line)
 	{
-		if(this.#worker!==null) {
-			this.#worker.postMessage({"func":"clearBreakpoint", "args":[...arguments]});
-			return;
-		}
-
 		delete this.#breakpoints[''+line];
 	}
 
@@ -762,11 +576,6 @@ class Tati
 
 	clearAllBreakpoints()
 	{
-		if(this.#worker!==null) {
-			this.#worker.postMessage({"func":"clearAllBreakpoints", "args":[...arguments]});
-			return;
-		}
-
 		this.#breakpoints = {};
 	}
 
@@ -787,26 +596,13 @@ class Tati
 	* won't be necessary if only the values of context variables are
 	* changed later.
 	*
-	* Note that if `use_worker` is set to `true` in the constructor 
-	* configuration, the worker context objects are clones and are not 
-	* directly accessible. So directly modifying the value of context 
-	* variables won't work and you should use `setContext` or 
-	* `setContextVariable` methods. Also note that the context object must 
-	* be a plain object when using workers. Tati will automatically convert 
-	* context variables to plain objects when using workers, which means the 
-	* functions will be converted to `undefined`.
-	*
-	* This function is asynchronous, so you may want to use await to make
-	* sure the context is set accordingly.
-	*
-	* @param {object} context The new context object. If `use_worker` is
-	* set, it will be cloned to a plain object.
-	*
+	* @param {object} context The new context object. 
+	* 
 	* @param {Array} masked The list of the objects and variables to be
 	* masked to `undefined`.
 	*/
 
-	async setContext(context, masked)
+	setContext(context, masked)
 	{
 
 		if(masked!==undefined) {
@@ -816,45 +612,23 @@ class Tati
 		if(context!==undefined) {
 			this.#context = {...context};
 		}
-
-		if(this.#worker!==null) {
-			try {
-				this.#worker.postMessage({"func":"setContext", "args":Tati.recursive_clone([...arguments])});
-				const msg_promise = new Promise((resolve) => this.#set_worker_context_resolve = resolve);
-				await msg_promise;
-			}
-			catch(e) {
-				throw "Error in cloning context object to pass to the worker. When using workers, context must be a plain object."
-			}
-		}
-
 	}
 
 
 	/**
 	* Sets or defines context variables. Like `setContext`, the prepare
 	* function should be called after adding new context properties.
-	* And if `use_worker` is set `true`, the clones of the set values will
-	* be used in the worker.
 	*
 	* This function is asynchronous, so you may want to use await to make
 	* sure the context is set accordingly.
 	*
 	* @param {string} varname The variable name.
 	*
-	* @param {any} value The new value. If `use_worker` is set, it will
-	* be cloned to a plain object.
+	* @param {any} value The new value. 
 	*/
 
 	async setContextVariable(varname, value)
 	{
-
-		if(this.#worker!==null) {
-			this.#worker.postMessage({"func":"setContextVariable", "args":Tati.recursive_clone([...arguments])});
-			const msg_promise = new Promise((resolve) => this.#set_worker_context_resolve = resolve);
-			await msg_promise;
-		}
-
 		this.#context[varname] = value;
 	}
 
@@ -863,9 +637,6 @@ class Tati
 	* the results of the script being debugged. Of course, the only types
 	* that can be modified from inside the scripts are arrays and objects,
 	* i.e. the variables that are passed by reference and not by value.
-	* This will still be true when using workers, the only difference is
-	* that a cloning will be applied and the results will only contain
-	* plain objects. See also {@link Tati#getWorkerContext}
 	*
 	* @param {string} varname The variable name.
 	*/
@@ -886,39 +657,7 @@ class Tati
 
 
 	/**
-	* This is used to update the context copy outside the worker. Note
-	* that this is not usually needed as Tati updates the context values
-	* before calling the `step_callback`, unless the `get_worker_context_on_callback`
-	* parameter is set to `false`. It may be needed when the context variables
-	* are big and transmitting them between the user instance and the worker
-	* are intensive. In such cases, if the user needs to check the new context
-	* values, they should call this before getting the context.
-	*
-	* Note that this function is asynchronous, so you may need to use it
-	* with an await directive.
-	*/
-
-	async getWorkerContext()
-	{
-		if(this.#worker!==null && !this.__get_worker_context_on_next_step__) {
-			this.#worker.postMessage({"func":"getWorkerContext", "args":[...arguments]});
-
-			const msg_promise = new Promise((resolve) => this.#get_worker_context_resolve = resolve);
-			this.#context = await msg_promise;
-
-			return this.#context;
-		}
-	}
-
-
-
-
-
-	/**
 	* Returns the list of working timers. 
-	* 
-	* Doesn't work when the code is running in worker mode. Use `getTimersAsync`
-	* for such cases.
 	*/
 
 	getTimers()
@@ -927,7 +666,7 @@ class Tati
 		const now = this.#is_paused?this.#timer_pause_time:Date.now();
 
 		for(const t of this.#timer_queue) {
-			ret.push( {type: t.repeat?"interval":"timeout", interval:t.interval, func: t.func, remaining: t.due - now } );
+			ret.push( { type: t.repeat?"interval":"timeout", interval:t.interval, func: t.func, remaining: t.due - now } );
 		}
 
 		return ret;
@@ -935,29 +674,7 @@ class Tati
 
 
 	/**
-	* Returns the list of working timers like `getTimers` but also works when the code is running 
-	* in worker mode. Use `await` directive when calling it.
-	*/
-
-	async getTimersAsync()
-	{
-		if(this.#worker!==null) {
-			this.#worker.postMessage({"func":"getTimers", "args":[...arguments]});
-
-			const msg_promise = new Promise((resolve) => this.#get_worker_timers_resolve = resolve);
-
-			return await msg_promise;
-		}
-
-		return getTimers();
-	}
-
-
-	/**
 	* Returns the running status.
-	* 
-	* Doesn't work when the code is running in worker mode. Use `getStatusAsync`
-	* for such cases.
 	*/
 
 
@@ -984,28 +701,30 @@ class Tati
 	}
 
 
-	/**
-	* Returns the running status like `getStatus` but also works when the code is running 
-	* in worker mode. Use `await` directive when calling it.
-	*/
-
-	async getStatusAsync()
-	{
-		if(this.#worker!==null) {
-			this.#worker.postMessage({"func":"getStatus", "args":[...arguments]});
-
-			const msg_promise = new Promise((resolve) => this.#get_worker_status_resolve = resolve);
-
-			return await msg_promise;
-		}
-
-		return getStatus();
-	}
-
 
 
 	// For internal use
 
+
+	#sweep_lines()
+	{
+		this.code_rows = new Uint16Array(this.#code.length);
+		this.code_cols = new Uint16Array(this.#code.length);
+
+		let l = 1;
+		let c = 1;
+
+		for( let i in this.#code ) {
+			this.code_rows[i] = l;
+			this.code_cols[i] = c;
+
+			if(this.#code[i]=='\n') {
+				l++;
+				c=1;
+			}
+			else c++;
+		}
+	}
 
 
 	#eval_module_in_browser(code, onload)
@@ -1040,26 +759,6 @@ class Tati
 		}
 		else {
 			this.#eval_module_in_node(code, onload);
-		}
-	}
-
-
-
-	set_worker_funcs(run_func, debug_func)
-	{
-		if(Tati.is_worker()) {
-			if(run_func!==null) run_func = run_func.bind(this.#default_root);
-			if(debug_func!==null) debug_func = debug_func.bind(this.#default_root);
-
-			this.#run_func = run_func;
-			this.#debug_func = debug_func;
-		}
-	}
-
-	get_worker_context()
-	{
-		if(Tati.is_worker()) {
-			return this.#context;
 		}
 	}
 
@@ -1295,6 +994,37 @@ class Tati
 			}
 		}
 	}
+
+
+	// #transpile_jsx(ast)
+	// {
+
+	// 	if(typeof(ast)=="object" ) {
+	// 		for(let el in ast) {
+	// 			if(ast[el]!=null && typeof(ast[el].type)!="undefined") {
+
+	// 				if(ast[el].type=="JSXElement") {
+	// 					ast[el] = {
+	// 					  "type": "CallExpression",
+	// 					  "callee": {
+	// 					    "type": "Identifier",
+	// 					    "name": "__tati_jsx_create_element__"
+	// 					  },
+	// 					  "arguments": [
+	// 					    {
+	// 					      "type": "Literal",
+	// 					      "value": JSON.stringify(ast[el]),
+	// 					    }
+	// 					    ]
+						  
+	// 					};
+	// 				}
+	// 			}
+
+	// 			this.#transpile_jsx(ast[el]);
+	// 		}
+	// 	}
+	// }
 
 
 	#set_timeout(func, interval)
@@ -1535,13 +1265,8 @@ class Tati
 					"arguments": [
 					{
 						"type": "Literal",
-						"value": el.loc.start.line,
-						"raw": "" + el.loc.start.line
-					},
-					{
-						"type": "Literal",
-						"value": el.loc.start.column,
-						"raw": "" + el.loc.start.column
+						"value": el.start,
+						"raw": "" + el.start
 					}
 					],
 					"optional": false
@@ -1571,13 +1296,8 @@ class Tati
 					"arguments": [
 					{
 						"type": "Literal",
-						"value": el.loc.start.line,
-						"raw": "" + el.loc.start.line
-					},
-					{
-						"type": "Literal",
-						"value": el.loc.start.column,
-						"raw": "" + el.loc.start.column
+						"value": el.start,
+						"raw": "" + el.start
 					}
 					],
 					"optional": false
@@ -1617,13 +1337,8 @@ class Tati
 													"arguments": [
 													{
 														"type": "Literal",
-														"value": el.loc.start.line,
-														"raw": "" + el.loc.start.line
-													},
-													{
-														"type": "Literal",
-														"value": el.loc.start.column,
-														"raw": "" + el.loc.start.column
+														"value": el.start,
+														"raw": "" + el.start
 													},
 												],
 												"optional": false
@@ -1649,16 +1364,14 @@ class Tati
 	};
 
 
-	async #template_watch_args(pid, r,c)
+	async #template_watch_args(pid, ch)
 	{
 		if(pid!==this.#prepare_index) return new Promise( function(res,rej) {} );
 
 		const self = this;
 
-		c++;
-
-		this.last_column = c;
-		this.last_row = r;
+		this.last_column = this.code_cols[ch];
+		this.last_row = this.code_rows[ch];
 
 		if(this.#ui_refresh_counter>=this.#ui_refresh_steps) {
 			this.#ui_refresh_counter=0;
@@ -1669,11 +1382,11 @@ class Tati
 
 		if( this.#run_to_breakpoint ) {
 
-			if(this.#breakpoints[r]) {
+			if(this.#breakpoints[this.last_row]) {
 
 				let vals={};
 
-				for(let i=3;i<arguments.length;i+=2) {
+				for(let i=2;i<arguments.length;i+=2) {
 					if(arguments[i+1]==undefined) {
 						vals[arguments[i]]=undefined;
 					}
@@ -1682,7 +1395,7 @@ class Tati
 					}
 				}
 
-				if( this.step_callback(r,c,vals) ) {
+				if( this.step_callback(this.last_row,this.last_column,vals) ) {
 					this.#pause_timers();
 					self.#is_paused = true;
 					return new Promise(
@@ -1697,7 +1410,7 @@ class Tati
 		else {
 			let vals={};
 
-			for(let i=3;i<arguments.length;i+=2) {
+			for(let i=2;i<arguments.length;i+=2) {
 				if(arguments[i+1]==undefined) {
 					vals[arguments[i]]=undefined;
 				}
@@ -1706,7 +1419,7 @@ class Tati
 				}
 			}
 
-			if( this.step_callback(r,c,vals) ) {
+			if( this.step_callback(this.last_row,this.last_column,vals) ) {
 				this.#pause_timers();
 				self.#is_paused = true;
 				return new Promise(
@@ -1720,7 +1433,7 @@ class Tati
 	}
 
 
-	async #template_no_watch_args(pid, r,c)
+	async #template_no_watch_args(pid, ch)
 	{
 		if(pid!==this.#prepare_index) return new Promise( function(res,rej) {} );
 
@@ -1728,8 +1441,8 @@ class Tati
 
 		c++;
 
-		this.last_column = c;
-		this.last_row = r;
+		this.last_column = this.code_cols[ch];
+		this.last_row = this.code_rows[ch];
 
 
 		if(this.#ui_refresh_counter>=this.#ui_refresh_steps) {
@@ -1740,8 +1453,8 @@ class Tati
 
 		if( this.#run_to_breakpoint ) {
 
-			if(this.#breakpoints[r]) {
-				if( this.step_callback(r,c) ) {
+			if(this.#breakpoints[this.last_row]) {
+				if( this.step_callback(this.last_row,this.last_column) ) {
 					this.#pause_timers();
 					self.#is_paused = true;
 					return new Promise(
@@ -1754,7 +1467,7 @@ class Tati
 
 		}
 		else {
-			if( this.step_callback(r,c) ) {
+			if( this.step_callback(this.last_row,this.last_column) ) {
 				this.#pause_timers();
 				self.#is_paused = true;
 				return new Promise(
@@ -1767,6 +1480,54 @@ class Tati
 		return true;
 	}
 
+
+	#jsx_create_element( jsx )
+	{
+		jsx = JSON.parse(jsx);
+
+		console.log(jsx);
+
+		function traverse(ast) 
+		{
+			if(typeof(ast)==="object" ) {
+
+				for(let e in ast) {
+					traverse(ast[e]);
+				}
+
+				if(ast!=null && ast.type!=undefined) {		
+
+					if(ast.type==="JSXElement") {
+
+						let attrs = {};
+						for(let a of ast.openingElement.attributes) {
+							attrs[ a.name.name ] = a.value;
+						}
+
+						ast.attributes = attrs;
+
+						for(let c in ast.children) {
+							ch = ast.children[c];
+						}
+
+					}
+					else if(ast.type==="JSXAttribute" && ast.value) {
+						if(ast.value.type==="JSXExpressionContainer") {
+							ast.value = astring.generate(ast.value.expression);
+						}
+						else if(ast.value.type==="Literal") {
+							ast.value = `"${ast.value.value.replace(/["]/g, "\\\"")}"`;
+						}
+					}
+				}
+
+			}
+		}
+
+		traverse(jsx);
+
+		console.log(jsx);
+	}
 
 	static error_proxy(err)
 	{

@@ -188,7 +188,6 @@
 					<a href="https://www.npmjs.com/package/tati">npm Package</a>
 					|||
 					<a href="simple.html">Simple Demo</a> |
-					<a href="worker.html">Worker Demo</a> |
 					<a href="dual.html">Dual Debuggers</a>
 
 					<hr style="width:66%;margin:1rem auto;">
@@ -212,12 +211,9 @@
 function addAlpha() {
   alpha+=1;
   updateOutput();
-
-  alpha_timeout = setTimeout( addAlpha, 10 );
 }
 
-clearTimeout(alpha_timeout);
-setTimeout( addAlpha, 10 );
+setInterval( addAlpha, 10 );
 
 </pre>
 <pre id="editor-2" contenteditable
@@ -233,11 +229,9 @@ function addBeta() {
   else if(beta<=0) {
     inc=1;
   }
-  beta_timeout = setTimeout( addBeta, 10 );
 }
 
-clearTimeout(beta_timeout);
-setTimeout( addBeta, 10 );
+setInterval( addBeta, 10 );
 
 
 </pre>
@@ -395,6 +389,7 @@ setTimeout( addBeta, 10 );
 										},
 
 										function(r,c,error_type,error_desc) {
+											console.log(this)
 											envs[this.index].msg = `Error on Console ${this.index}, Row ${r}:  ${error_type.toUpperCase()} -> ${error_desc}`;
 											updateOutput();
 											updateButtons(envs[this.index]);
@@ -458,8 +453,12 @@ setTimeout( addBeta, 10 );
 		}
 
 		function updateOutput() {
-			res.innerHTML = `Script 1: Next Row ${envs[1].tati.last_row} Next Col ${envs[1].tati.last_row}\n`+							 
-							`Script 2: Next Row ${envs[2].tati.last_row} Next Col ${envs[2].tati.last_row}\n`+
+			let r1 = envs[1].tati.last_row;
+			let c1 = envs[1].tati.last_column;
+			let r2 = envs[2].tati.last_row;
+			let c2 = envs[2].tati.last_column;
+			res.innerHTML = `Script 1: Next Row ${r1===-1?"N/A":r1} Next Col ${c1===-1?"N/A":c1}\n`+							 
+							`Script 2: Next Row ${r2===-1?"N/A":r2} Next Col ${c2===-1?"N/A":c2}\n`+
 							 `<span style='color:#d00;'>${envs[1].msg}</span>\n`+
 							 `<span style='color:#d00;'>${envs[2].msg}</span>`+
 							 `<div id='osc-box'><div id='osc'></div></div>`;
@@ -471,6 +470,7 @@ setTimeout( addBeta, 10 );
 		function onLoad() {
 			configureEditor(1);
 			configureEditor(2);
+			updateOutput();
 		}
 
 	</script>

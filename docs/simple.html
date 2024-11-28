@@ -205,7 +205,6 @@
 					<hr style="width:30%;margin:1rem auto;">
 
 					<a href="simple.html">Simple Demo</a>
-					<a href="worker.html">Worker Demo</a>
 					<a href="dual.html">Dual Debuggers</a>
 
 					<hr style="width:66%;margin:1rem auto;">
@@ -274,7 +273,7 @@ for(let j=0;
 			
 								function(r,c,ws) { // step function (row,column,watched variables)
 
-									sd.innerHTML="Next Step<hr>Row : " + r + "  Column: "+  c+"\n\n";
+									sd.innerHTML="Next Step<hr>Row : " + r===-1?"N/A":r + "  Column: "+  c===-1?"N/A":r+"\n\n";
 									sd.innerHTML+="Watched Variables<hr>" +  JSON.stringify(ws);
 									editor.session.removeMarker(marker);
 									marker = addMarker(r-1,r-1);

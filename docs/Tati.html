@@ -28,7 +28,7 @@
 
 <header>
     
-        <h2><span class="attribs"><span class="type-signature"></span></span>Tati<span class="signature">(step_callback, stop_callback, error_callback, config, use_worker, default_root)</span><span class="type-signature"></span></h2>
+        <h2><span class="attribs"><span class="type-signature"></span></span>Tati<span class="signature">(step_callback, stop_callback, error_callback, config, default_root)</span><span class="type-signature"></span></h2>
         
     
 </header>
@@ -41,7 +41,7 @@
     
 
     
-    <h4 class="name" id="Tati"><span class="type-signature"></span>new Tati<span class="signature">(step_callback, stop_callback, error_callback, config, use_worker, default_root)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="Tati"><span class="type-signature"></span>new Tati<span class="signature">(step_callback, stop_callback, error_callback, config, default_root)</span><span class="type-signature"></span></h4>
     
 
     
@@ -221,36 +221,6 @@ properties:</p></td>
 
         <tr>
             
-                <td class="name"><code>use_worker</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                </td>
-            
-
-            <td class="description last"><p>(default: false) - If set, the debugger will run in a
-web worker, much safer but communication with it will be limited so the context
-should be plain object and the script won't be able to interact with any other object
-(like DOM) directly.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
                 <td class="name"><code>default_root</code></td>
             
 
@@ -272,10 +242,8 @@ should be plain object and the script won't be able to interact with any other o
             
 
             <td class="description last"><p>The <code>this</code> of the script being run. It is an empty
-object {} by default. It is important because it masks the Tati object or the
-worker that the script is being debugged in. If you want to set it to another
-object this is the way, but note that if <code>use_worker</code> is set to true, it will not
-work as expected because of the access limitations.</p></td>
+object {} by default. It is important because it masks the Tati object.</p>
+<p>(<code>createElement( type, props, ...children)</code>).</p></td>
         </tr>
 
     
@@ -316,7 +284,7 @@ work as expected because of the access limitations.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line133">line 133</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line131">line 131</a>
     </li></ul></dd>
     
 
@@ -373,8 +341,6 @@ work as expected because of the access limitations.</p></td>
 
 <div class="description">
     <p>Returns the running status.</p>
-<p>Doesn't work when the code is running in worker mode. Use <code>getStatusAsync</code>
-for such cases.</p>
 </div>
 
 
@@ -412,7 +378,7 @@ for such cases.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line964">line 964</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line681">line 681</a>
     </li></ul></dd>
     
 
@@ -492,7 +458,7 @@ for such cases.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line763">line 763</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line577">line 577</a>
     </li></ul></dd>
     
 
@@ -629,7 +595,7 @@ for such cases.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line749">line 749</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line568">line 568</a>
     </li></ul></dd>
     
 
@@ -795,7 +761,7 @@ the process.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line692">line 692</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line521">line 521</a>
     </li></ul></dd>
     
 
@@ -831,7 +797,7 @@ the process.</p></td>
     
 
     
-    <h4 class="name" id="continue"><span class="type-signature"></span>continue<span class="signature">(get_worker_context_on_callback)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="continue"><span class="type-signature"></span>continue<span class="signature">()</span><span class="type-signature"></span></h4>
     
 
     
@@ -850,63 +816,6 @@ reaching a breakpoint.</p>
 
 
 
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-        <th>Default</th>
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>get_worker_context_on_callback</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    true
-                
-                </td>
-            
-
-            <td class="description last"><p>see <a href="Tati.html#step">Tati#step</a></p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
 
 
 
@@ -942,7 +851,7 @@ reaching a breakpoint.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line625">line 625</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line469">line 469</a>
     </li></ul></dd>
     
 
@@ -1090,7 +999,7 @@ until reaching a breakpoint. If false, it will step line by line.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line515">line 515</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line380">line 380</a>
     </li></ul></dd>
     
 
@@ -1126,7 +1035,7 @@ until reaching a breakpoint. If false, it will step line by line.</p></td>
     
 
     
-    <h4 class="name" id="getCode"><span class="type-signature"></span>getCode<span class="signature">(line)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="getCode"><span class="type-signature"></span>getCode<span class="signature">()</span><span class="type-signature"></span></h4>
     
 
     
@@ -1143,55 +1052,6 @@ until reaching a breakpoint. If false, it will step line by line.</p></td>
 
 
 
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>line</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">integer</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>The breakpoint line.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
 
 
 
@@ -1227,7 +1087,7 @@ until reaching a breakpoint. If false, it will step line by line.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line705">line 705</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line532">line 532</a>
     </li></ul></dd>
     
 
@@ -1315,7 +1175,7 @@ until reaching a breakpoint. If false, it will step line by line.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line882">line 882</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line653">line 653</a>
     </li></ul></dd>
     
 
@@ -1362,10 +1222,7 @@ until reaching a breakpoint. If false, it will step line by line.</p></td>
     <p>Returns the value of a context variable. This can be used to access
 the results of the script being debugged. Of course, the only types
 that can be modified from inside the scripts are arrays and objects,
-i.e. the variables that are passed by reference and not by value.
-This will still be true when using workers, the only difference is
-that a cloning will be applied and the results will only contain
-plain objects. See also <a href="Tati.html#getWorkerContext">Tati#getWorkerContext</a></p>
+i.e. the variables that are passed by reference and not by value.</p>
 </div>
 
 
@@ -1458,96 +1315,7 @@ plain objects. See also <a href="Tati.html#getWorkerContext">Tati#getWorkerConte
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line873">line 873</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="getStatusAsync"><span class="type-signature">(async) </span>getStatusAsync<span class="signature">()</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    <p>Returns the running status like <code>getStatus</code> but also works when the code is running
-in worker mode. Use <code>await</code> directive when calling it.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line992">line 992</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line644">line 644</a>
     </li></ul></dd>
     
 
@@ -1592,8 +1360,6 @@ in worker mode. Use <code>await</code> directive when calling it.</p>
 
 <div class="description">
     <p>Returns the list of working timers.</p>
-<p>Doesn't work when the code is running in worker mode. Use <code>getTimersAsync</code>
-for such cases.</p>
 </div>
 
 
@@ -1602,345 +1368,6 @@ for such cases.</p>
 
 
 
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line924">line 924</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="getTimersAsync"><span class="type-signature">(async) </span>getTimersAsync<span class="signature">()</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    <p>Returns the list of working timers like <code>getTimers</code> but also works when the code is running
-in worker mode. Use <code>await</code> directive when calling it.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line942">line 942</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="getWorkerContext"><span class="type-signature">(async) </span>getWorkerContext<span class="signature">()</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    <p>This is used to update the context copy outside the worker. Note
-that this is not usually needed as Tati updates the context values
-before calling the <code>step_callback</code>, unless the <code>get_worker_context_on_callback</code>
-parameter is set to <code>false</code>. It may be needed when the context variables
-are big and transmitting them between the user instance and the worker
-are intensive. In such cases, if the user needs to check the new context
-values, they should call this before getting the context.</p>
-<p>Note that this function is asynchronous, so you may need to use it
-with an await directive.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line901">line 901</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="pause"><span class="type-signature"></span>pause<span class="signature">(get_worker_context_on_callback)</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    <p>Pauses the script. When the script is running an intensive loop or process,
-checking for pause command will be done in intervals, which can be configured
-using <a href="Tati.html#configureUIRefreshRate">Tati#configureUIRefreshRate</a>.</p>
-<p>When an script with a timeout or interval is being debugged but no breakpoint
-is set, pause will be applied on the next callback, Tati will prevent timer
-callback execution, but it doesn't stop the runtime event loop, so they will
-expire as defined.</p>
-<p>Also note that Tati can only pause inside the given script and cannot
-enter the called functions that are defined elsewhere, i.e. native functions
-or external libraries.</p>
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-        <th>Default</th>
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>get_worker_context_on_callback</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    true
-                
-                </td>
-            
-
-            <td class="description last"><p>see <a href="Tati.html#step">Tati#step</a></p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
 
 
 
@@ -1977,6 +1404,103 @@ or external libraries.</p>
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
         <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line663">line 663</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="pause"><span class="type-signature"></span>pause<span class="signature">()</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>Pauses the script. When the script is running an intensive loop or process,
+checking for pause command will be done in intervals, which can be configured
+using <a href="Tati.html#configureUIRefreshRate">Tati#configureUIRefreshRate</a>.</p>
+<p>When an script with a timeout or interval is being debugged but no breakpoint
+is set, pause will be applied on the next callback, Tati will prevent timer
+callback execution, but it doesn't stop the runtime event loop, so they will
+expire as defined.</p>
+<p>Also note that Tati can only pause inside the given script and cannot
+enter the called functions that are defined elsewhere, i.e. native functions
+or external libraries.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line498">line 498</a>
     </li></ul></dd>
     
 
@@ -2175,7 +1699,7 @@ i.e. import and export statements will work, otherwise they will raise
 an unexpected token error in parse time. Note that imports cannot be
 executed, because normal import statements must be the top-level of a module
 and this cannot be the case when tati is wrapping the code. Also <code>import()</code>
-function is supported by Tati, but unfortunately Esprima doesn't support
+function is supported by Tati, but unfortunately acorn doesn't support
 it yet and therefore raises a parser error exception.</p></td>
         </tr>
 
@@ -2217,7 +1741,7 @@ it yet and therefore raises a parser error exception.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line354">line 354</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line205">line 205</a>
     </li></ul></dd>
     
 
@@ -2307,7 +1831,7 @@ the environment of the two debug/run procedures are the same.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line434">line 434</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line303">line 303</a>
     </li></ul></dd>
     
 
@@ -2343,7 +1867,7 @@ the environment of the two debug/run procedures are the same.</p>
     
 
     
-    <h4 class="name" id="setAllBreakpoints"><span class="type-signature"></span>setAllBreakpoints<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="setAllBreakpoints"><span class="type-signature"></span>setAllBreakpoints<span class="signature">(bps)</span><span class="type-signature"></span></h4>
     
 
     
@@ -2351,9 +1875,7 @@ the environment of the two debug/run procedures are the same.</p>
 
 
 <div class="description">
-    <p>Sets all breakpoints. Breakpoints should be in the form of
-{ 5: true, 10: true } where the keys are the line numbers
-and the breakpoint is only set if the value is exactly true.</p>
+    <p>Sets all breakpoints.</p>
 </div>
 
 
@@ -2362,6 +1884,57 @@ and the breakpoint is only set if the value is exactly true.</p>
 
 
 
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>bps</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">integer</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The breakpoint line. Breakpoints should be in the
+form of { 5: true, 10: true } where the keys are the line numbers
+and the breakpoint is only set if the value is exactly true.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
 
 
 
@@ -2397,7 +1970,7 @@ and the breakpoint is only set if the value is exactly true.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line733">line 733</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line557">line 557</a>
     </li></ul></dd>
     
 
@@ -2534,7 +2107,7 @@ and the breakpoint is only set if the value is exactly true.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line717">line 717</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line544">line 544</a>
     </li></ul></dd>
     
 
@@ -2570,7 +2143,7 @@ and the breakpoint is only set if the value is exactly true.</p>
     
 
     
-    <h4 class="name" id="setContext"><span class="type-signature">(async) </span>setContext<span class="signature">(context, masked)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="setContext"><span class="type-signature"></span>setContext<span class="signature">(context, masked)</span><span class="type-signature"></span></h4>
     
 
     
@@ -2591,16 +2164,6 @@ class name of Tati, which is normally Tati itself.</p>
 of the context or the members of the masked list are changed. But it
 won't be necessary if only the values of context variables are
 changed later.</p>
-<p>Note that if <code>use_worker</code> is set to <code>true</code> in the constructor
-configuration, the worker context objects are clones and are not
-directly accessible. So directly modifying the value of context
-variables won't work and you should use <code>setContext</code> or
-<code>setContextVariable</code> methods. Also note that the context object must
-be a plain object when using workers. Tati will automatically convert
-context variables to plain objects when using workers, which means the
-functions will be converted to <code>undefined</code>.</p>
-<p>This function is asynchronous, so you may want to use await to make
-sure the context is set accordingly.</p>
 </div>
 
 
@@ -2652,8 +2215,7 @@ sure the context is set accordingly.</p>
 
             
 
-            <td class="description last"><p>The new context object. If <code>use_worker</code> is
-set, it will be cloned to a plain object.</p></td>
+            <td class="description last"><p>The new context object.</p></td>
         </tr>
 
     
@@ -2718,7 +2280,7 @@ masked to <code>undefined</code>.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line809">line 809</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line605">line 605</a>
     </li></ul></dd>
     
 
@@ -2763,9 +2325,7 @@ masked to <code>undefined</code>.</p></td>
 
 <div class="description">
     <p>Sets or defines context variables. Like <code>setContext</code>, the prepare
-function should be called after adding new context properties.
-And if <code>use_worker</code> is set <code>true</code>, the clones of the set values will
-be used in the worker.</p>
+function should be called after adding new context properties.</p>
 <p>This function is asynchronous, so you may want to use await to make
 sure the context is set accordingly.</p>
 </div>
@@ -2842,8 +2402,7 @@ sure the context is set accordingly.</p>
 
             
 
-            <td class="description last"><p>The new value. If <code>use_worker</code> is set, it will
-be cloned to a plain object.</p></td>
+            <td class="description last"><p>The new value.</p></td>
         </tr>
 
     
@@ -2884,7 +2443,7 @@ be cloned to a plain object.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line849">line 849</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line630">line 630</a>
     </li></ul></dd>
     
 
@@ -2920,7 +2479,7 @@ be cloned to a plain object.</p></td>
     
 
     
-    <h4 class="name" id="step"><span class="type-signature"></span>step<span class="signature">(get_worker_context_on_callback)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="step"><span class="type-signature"></span>step<span class="signature">()</span><span class="type-signature"></span></h4>
     
 
     
@@ -2938,69 +2497,6 @@ It will call the <code>step_callback</code> that was given to constructor.</p>
 
 
 
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-        <th>Default</th>
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>get_worker_context_on_callback</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-            
-            </td>
-
-            
-
-            
-                <td class="default">
-                
-                    true
-                
-                </td>
-            
-
-            <td class="description last"><p>When using workers,
-Tati updates the context values before calling the <code>step_callback</code>,
-unless the <code>get_worker_context_on_callback</code> parameter is set to <code>false</code>.
-It may be needed when the context variables are big and transmitting them
-between the user instance and the worker are intensive. In such cases,
-if the user needs to check the new context values, they should call
-<a href="Tati.html#getWorkerContext">Tati#getWorkerContext</a> before getting the context.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
 
 
 
@@ -3036,7 +2532,7 @@ if the user needs to check the new context values, they should call
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line599">line 599</a>
+        <a href="tati.js.html">tati.js</a>, <a href="tati.js.html#line452">line 452</a>
     </li></ul></dd>
     
 
