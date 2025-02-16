@@ -17,8 +17,8 @@
   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  ARE DISCLAIMED. IN NO EVENT SHALL ARASH KAZEMI BE LIABLE FOR ANY
-  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR COPYRIGHT HOLDERS BE LIABLE FOR 
+  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
   (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
   LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
   ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -28,6 +28,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const webpack = require('webpack');
 
 module.exports = {
   entry: './src/tati.js',
@@ -42,6 +43,11 @@ module.exports = {
     libraryTarget: 'var',
     globalObject: 'this'
   },
+  resolve: {
+        fallback: {
+            buffer: require.resolve('buffer/'),
+        },
+    },
   plugins: [
     {
       apply: (compiler) => {
@@ -55,5 +61,9 @@ module.exports = {
 
         });
       }
-    }]
+    },
+     new webpack.ProvidePlugin({
+            Buffer: ['buffer', 'Buffer'],
+        })
+  ]
 };

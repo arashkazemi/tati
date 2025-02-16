@@ -45,8 +45,8 @@
 	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 	AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 	IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-	ARE DISCLAIMED. IN NO EVENT SHALL ARASH KAZEMI BE LIABLE FOR ANY
-	DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+	ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR COPYRIGHT HOLDERS BE LIABLE FOR 
+	ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
 	(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
 	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 	ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -56,10 +56,8 @@
 
 
 const acorn = require("acorn");
-const acornjsx = require("acorn-jsx");
-
 const astring = require("astring");
-const AsyncPrototypes = require("async.prototypes");
+const async_prototypes = require("async.prototypes");
 
 
 class Tati
@@ -79,7 +77,6 @@ class Tati
 	#timer_timeout = -1;
 
 	#default_root = {};
-	#jsx_handler = null;
 
 	#run_func = null;
 	#debug_func = null;
@@ -89,7 +86,7 @@ class Tati
 
 	#breakpoints = {};
 	#context = {};
-	#masked = ["globalThis", "window", "self"]; // the class name will also be added in constructor
+	#masked = []; // "globalThis", "window", "self"
 
 	#is_paused = false;
 	#run_to_breakpoint = false;
@@ -106,11 +103,12 @@ class Tati
 	code_cols;
 
 
-	// these are internal handles used for development only, may be changed anytime in the future.
-	static acorn = acorn;
-	static acornjsx = acornjsx;
-	static astring = astring;
+	// this is the default config. you can get it using `Tati.default_config` and
+	// then modify it.
 
+	static default_config = { 
+		default_root: undefined,
+	};
 
 	/**
 	* Creates an instance of Tati.
@@ -148,32 +146,25 @@ class Tati
 	* @param {object} config - Instance configuration. It contains the following 
 	* properties:
 	* 
-	* @param {object} default_root - The `this` of the script being run. It is an empty
+	* `default_root` (any): The `this` of the script being run. It is an empty
 	* object {} by default. It is important because it masks the Tati object. 
 	* 
-	* (`createElement( type, props, ...children)`).
-	* 
+
 	*/
 
 
-	constructor(    step_callback=null,
-					stop_callback=null,
-					error_callback=null,
+	constructor(    
+		step_callback=null,
+		stop_callback=null,
+		error_callback=null,
 
-					config={ 
-							 default_root: undefined,
-							 jsx_handler: false
-						   }
-				)
+		config=Tati.default_config
+		)
 	{
-
-		Tati.acorn = acorn.Parser.extend( acornjsx () )
 
 		var perr = Tati.error_proxy.bind(this);
 
 		if(config.default_root!==undefined) this.#default_root = config.default_root;
-		if(!!config.jsx_handler) this.#jsx_handler = config.jsx_handler;
-
 
 		if(this.#__is_browser__()) {
 			window.addEventListener("unhandledrejection", perr);
@@ -186,22 +177,22 @@ class Tati
 		this.step_callback = step_callback;
 
 		this.stop_callback = function(stop_callback) {
-								if(stop_callback) stop_callback.call(this);
-								AsyncPrototypes.unregisterAll();
-								this.#is_paused = false;
-								this.#run_func = null;
-								this.#debug_func = null;
-							}.bind(this,stop_callback);
+			if(stop_callback) stop_callback.call(this);
+			async_prototypes.unregisterAll();
+			this.#is_paused = false;
+			this.#run_func = null;
+			this.#debug_func = null;
+		}.bind(this,stop_callback);
 
 		this.error_callback = function(error_callback,r,c,error_type,error_desc) {
-								if(error_callback) error_callback.call(this, r,c,error_type,error_desc);
-								AsyncPrototypes.unregisterAll();
-								this.#is_paused = false;
-								this.#run_func = null;
-								this.#debug_func = null;
-							}.bind(this,error_callback);
+			if(error_callback) error_callback.call(this, r,c,error_type,error_desc);
+			async_prototypes.unregisterAll();
+			this.#is_paused = false;
+			this.#run_func = null;
+			this.#debug_func = null;
+		}.bind(this,error_callback);
 
-		this.#masked.push(this.constructor.name);
+		//this.#masked.push(this.constructor.name);
 
 	}
 
@@ -233,11 +224,12 @@ class Tati
 	prepare( code, watch_locals=true, step_loop_args=true, is_module=false, ascyncize_direct_run=true )
 	{
 
-		if(is_module &amp;&amp; this.#__is_browser__()) {
-			throw "modules can't be created dynamically in browser workers.";
-		}
+		// if(is_module &amp;&amp; this.#__is_browser__()) {
+		// 	throw "modules can't be created dynamically in browser workers.";
+		// }
 
 		this.#prepare_index++;
+
 		this.#code = code;
 
 		this.error = null;
@@ -251,28 +243,15 @@ class Tati
 		var ws = watch_locals ? [[]] : null;
 
 		try {
-			let opts = {loc:true};
+			let opts = {sourceType:'script', ecmaVersion: 2020};
+			let map;
 
 			if(is_module) {
 				opts.sourceType = 'module';
 			}
 
-			if(this.#jsx_handler) {
-				opts.jsx = true;
-			}
-
 			this.#esp = acorn.parse( code, opts );
-
-			if(ascyncize_direct_run) {
-				this.#asyncize(this.#esp);
-			}
-
-			if(this.#jsx_handler) {
-				let tesp = structuredClone(this.#esp);
-				//this.#transpile_jsx(this.#esp);
-				code = astring.generate(this.#esp);
-				this.#esp = tesp;
-			}
+			this.#sweep_rows(code);
 
 		}
 		catch(e) {
@@ -286,39 +265,71 @@ class Tati
 		}
 
 
-		let ctx = [ "__tati_template_watch_args__",
-					"__tati_template_no_watch_args__",
-					"__tati_jsx_create_element__",
-					"__tati_error_proxy__",
-					"setTimeout",
-					"setInterval",
-					"clearTimeout",
-					"clearInterval",
-					...Object.keys(this.#context),
-					"__tati_space__",
-					...this.#masked ].join(',');
+		let ctx = [ 
+			"__tati_template_watch_args__",
+			"__tati_template_no_watch_args__",
+			"__tati_error_proxy__",
+			"setTimeout",
+			"setInterval",
+			"clearTimeout",
+			"clearInterval",
+			...Object.keys(this.#context),
+			"__tati_space__",
+			...this.#masked ].join(',');
 
 
 
-		if(!ascyncize_direct_run) { 
-			// if true it is asyncized sooner for both run and debug mode.
-			this.#asyncize(this.#esp);
+		let imps = this.#cut_imports(this.#esp);
+		this.#asyncize(this.#esp);
+
+		if(ascyncize_direct_run) {
+			code = astring.generate(this.#esp).replace(/\/ __tati_template_paranthesis__/gm, "");
 		}
 
-		this.#tatize(this.#esp, ws);
-		//this.#transpile_jsx(this.#esp);
 
-		const new_code = astring.generate(this.#esp).replace(/\/ __tati_template_paranthesis__/gm, "");
+		if(is_module) {
+			this.#eval_module(`${imps}\nglobalThis.__tati_run_func__ = async function(${ctx}) { ${code} };`, 
+				function() {
+					this.#run_func = globalThis.__tati_run_func__;
+					globalThis.__tati_run_func__ = undefined;
 
-		this.#debug_func = eval(`(async function(${ctx}) { try{ ${new_code} } catch(e){__tati_error_proxy__(e)} })`);
+					this.#tatize(this.#esp, ws);
 
-		this.#run_func = eval(`(async function(${ctx}) { ${code} })`);
+					code = astring.generate(this.#esp).replace(/\/ __tati_template_paranthesis__/gm, "");
 
-		this.#run_func = this.#run_func.bind(this.#default_root);
-		this.#debug_func = this.#debug_func.bind(this.#default_root);
+					this.#eval_module(
+						`${imps}\nglobalThis.__tati_debug_func__ = 
+							async function(${ctx}) { try{ ${code} } catch(e){__tati_error_proxy__(e)} };`,
 
-		this.#sweep_lines();
+						function() {
+							this.#debug_func = globalThis.__tati_debug_func__;
+							globalThis.__tati_debug_func__ = undefined;
+						}.bind(this)
+					);
 
+
+				}.bind(this)
+			);
+		}
+		else {
+			this.#run_func = eval(`${imps}\n(async function(${ctx}) { ${code} })`);
+			this.#run_func = this.#run_func.bind(this.#default_root);
+		}
+
+
+
+		if(is_module) {
+
+		}
+		else {
+
+			this.#tatize(this.#esp, ws);
+
+			code = astring.generate(this.#esp).replace(/\/ __tati_template_paranthesis__/gm, "");
+
+			this.#debug_func = eval(`${imps}\n(async function(${ctx}) { try{ ${code} } catch(e){__tati_error_proxy__(e)} })`);
+			this.#debug_func = this.#debug_func.bind(this.#default_root);
+		}
 	};
 
 
@@ -335,44 +346,45 @@ class Tati
 		this.#is_debug = false;
 		this.error = null;
 
-		AsyncPrototypes.registerAll();
+		async_prototypes.registerAll();
 		this.#reset_timers();
 
 		let rf = this.#run_func.bind(null,
-							undefined,
-							undefined,
-							this.#jsx_create_element.bind(this),
-							undefined,
-							setTimeout,
-							setInterval,
-							clearTimeout,
-							clearInterval,
-							...Object.values(this.#context),
-						);
+			undefined,
+			undefined,
+			undefined,
+			setTimeout,
+			setInterval,
+			clearTimeout,
+			clearInterval,
+			...Object.values(this.#context),
+			);
 
 
-		if(this.is_module) {
+		if(this.#is_module) {
 
 			globalThis.__tati_run_func__ = rf;
-			this.#eval_module("globalThis.__tati_run_promise__ = globalThis.__tati_run_func__()", function() {
+			this.#eval_module(
+				"globalThis.__tati_run_promise__ = globalThis.__tati_run_func__()", 
+				function() {
 
-				let pr = globalThis.__tati_run_promise__;
-				globalThis.__tati_run_promise__ = undefined;
-				globalThis.__tati_run_func__ = undefined;
+					let pr = globalThis.__tati_run_promise__;
+					globalThis.__tati_run_promise__ = undefined;
+					globalThis.__tati_run_func__ = undefined;
 
-				pr.then( (function() {
+					pr.then( (function() {
 
-					if(this.#timer_queue.length===0) {
-						this.stop_callback();
-					}
+						if(this.#timer_queue.length===0) {
+							this.stop_callback();
+						}
 
-				}).bind(this) );
+					}).bind(this) );
 
-				pr.catch( (function(e) {
-					Tati.error_proxy.call(this,e);
-				}).bind(this) );
+					pr.catch( (function(e) {
+						Tati.error_proxy.call(this,e);
+					}).bind(this) );
 
-			}.bind(this));
+				}.bind(this));
 
 		}
 		else {
@@ -415,23 +427,22 @@ class Tati
 
 		this.#run_to_breakpoint = run_to_breakpoint;
 
-		AsyncPrototypes.registerAll();
+		async_prototypes.registerAll();
 		this.#reset_timers();
 
 		let rf = this.#debug_func.bind( null,
-										this.#template_watch_args.bind(this,this.#prepare_index),
-										this.#template_no_watch_args.bind(this,this.#prepare_index),
-										this.#jsx_create_element.bind(this),
-										Tati.error_proxy.bind(this),
-										this.#set_timeout.bind(this),
-										this.#set_interval.bind(this),
-										this.#clear_timeout.bind(this),
-										this.#clear_interval.bind(this),
-										...Object.values(this.#context),
-									);
+			this.#template_watch_args.bind(this,this.#prepare_index),
+			this.#template_no_watch_args.bind(this,this.#prepare_index),
+			Tati.error_proxy.bind(this),
+			this.#set_timeout.bind(this),
+			this.#set_interval.bind(this),
+			this.#clear_timeout.bind(this),
+			this.#clear_interval.bind(this),
+			...Object.values(this.#context),
+			);
 
 
-		if(this.is_module) {
+		if(this.#is_module) {
 
 			globalThis.__tati_run_func__ = rf;
 			this.#eval_module("globalThis.__tati_run_promise__ = globalThis.__tati_run_func__()", function() {
@@ -482,8 +493,8 @@ class Tati
 		this.#run_to_breakpoint = false;
 
 		//if(this.#debug_func!==null &amp;&amp; this.#debug_resolve!=null) {
-			this.#debug_resolve(true);
-			this.#resume_timers();
+		this.#debug_resolve(true);
+		this.#resume_timers();
 		//}
 	}
 
@@ -615,8 +626,8 @@ class Tati
 	*
 	*     k.setContext({foo:123, bar:"hello"}, [document, window]);
 	*
-	* The masked list is not necessary, and if not set, the masked list
-	* contains three predefined elements: `globalThis`, `window`, self and the
+	* The masked list is not necessary, but for limiting the access scope
+	* remember to mask `globalThis`, `window`, self and the
 	* class name of Tati, which is normally Tati itself.
 	*
 	* This function should be called before calling `prepare` if the keys
@@ -647,15 +658,12 @@ class Tati
 	* Sets or defines context variables. Like `setContext`, the prepare
 	* function should be called after adding new context properties.
 	*
-	* This function is asynchronous, so you may want to use await to make
-	* sure the context is set accordingly.
-	*
 	* @param {string} varname The variable name.
 	*
 	* @param {any} value The new value. 
 	*/
 
-	async setContextVariable(varname, value)
+	setContextVariable(varname, value)
 	{
 		this.#context[varname] = value;
 	}
@@ -734,19 +742,19 @@ class Tati
 	// For internal use
 
 
-	#sweep_lines()
+	#sweep_rows(code)
 	{
-		this.code_rows = new Uint16Array(this.#code.length);
-		this.code_cols = new Uint16Array(this.#code.length);
+		this.code_rows = new Uint32Array(code.length);
+		this.code_cols = new Uint32Array(code.length);
 
 		let l = 1;
 		let c = 1;
 
-		for( let i in this.#code ) {
+		for( let i in code ) {
 			this.code_rows[i] = l;
 			this.code_cols[i] = c;
 
-			if(this.#code[i]=='\n') {
+			if(code[i]=='\n') {
 				l++;
 				c=1;
 			}
@@ -764,9 +772,9 @@ class Tati
 		script.innerHTML = code + "\n" + "if(window.script_loaded_hook){window.script_loaded_hook();}";
 
 		window.script_loaded_hook = function(onload,script) {
+			window.script_loaded_hook = undefined;
+			document.body.removeChild(script);
 			if(onload) onload();
-				window.script_loaded_hook = undefined;
-				document.body.removeChild(script);
 		}.bind(null,onload,script);
 
 		document.body.appendChild(script);
@@ -816,47 +824,75 @@ class Tati
 
 	#wrap_try_catch(a)
 	{
-			var el = {
-					"type": "BlockStatement",
-					"body": [
+		var el = {
+			"type": "BlockStatement",
+			"body": [
+			{
+				"type": "TryStatement",
+				"block": a,
+				"handler": {
+					"type": "CatchClause",
+					"param": {
+						"type": "Identifier",
+						"name": "e"
+					},
+					"body": {
+						"type": "BlockStatement",
+						"body": [
 						{
-							"type": "TryStatement",
-							"block": a,
-							"handler": {
-								"type": "CatchClause",
-								"param": {
+							"type": "ExpressionStatement",
+							"expression": {
+								"type": "CallExpression",
+								"callee": {
+									"type": "Identifier",
+									"name": "__tati_error_proxy__"
+								},
+								"arguments": [
+								{
 									"type": "Identifier",
 									"name": "e"
-								},
-								"body": {
-									"type": "BlockStatement",
-									"body": [
-										{
-											"type": "ExpressionStatement",
-											"expression": {
-												"type": "CallExpression",
-												"callee": {
-													"type": "Identifier",
-													"name": "__tati_error_proxy__"
-												},
-												"arguments": [
-													{
-														"type": "Identifier",
-														"name": "e"
-													}
-												]
-											}
-										}
-									]
 								}
-							},
-							"finalizer": null
+								]
+							}
 						}
-					]
-				}
+						]
+					}
+				},
+				"finalizer": null
+			}
+			]
+		}
 
-			return el;
-	};
+		return el;
+	}
+
+
+	#cut_imports(ast)
+	{
+		let imps = [];
+
+		for(let i=0; i&lt;ast.body.length; i++) {
+
+			if(ast.body[i]!=null &amp;&amp; typeof(ast.body[i].type)!="undefined") {
+
+				if(ast.body[i].type=="ImportDeclaration") {
+					imps.push(ast.body[i]);
+					ast.body.splice(i, 1);
+					i--;
+				}
+			}
+		}
+
+		ast = {
+			"type": "Program",
+			"start": 0,
+			"end": 2719,
+			"body": imps,
+			"sourceType": "module"
+		}
+
+		return astring.generate(ast);
+	}
 
 
 	#tatize(a,ws)
@@ -1014,275 +1050,315 @@ class Tati
 						}
 					}
 					else if( ast[el].type=="FunctionDeclaration" ||
-									 ast[el].type=="FunctionExpression" ||
-									 ast[el].type=="ArrowFunctionExpression" ) {
+						ast[el].type=="FunctionExpression" ||
+						ast[el].type=="ArrowFunctionExpression" ) {
 						ast[el].async=true;
-					}
 				}
 			}
 		}
 	}
+}
 
+#set_timeout(func, interval)
+{
+	return this.#add_timer( { func: func, interval: interval, due: Date.now()+interval, repeat: false } );
+}
 
-	// #transpile_jsx(ast)
-	// {
+#set_interval(func, interval)
+{
+	return this.#add_timer( { func: func, interval: interval, due: Date.now()+interval, repeat: true } );
+}
 
-	// 	if(typeof(ast)=="object" ) {
-	// 		for(let el in ast) {
-	// 			if(ast[el]!=null &amp;&amp; typeof(ast[el].type)!="undefined") {
-
-	// 				if(ast[el].type=="JSXElement") {
-	// 					ast[el] = {
-	// 					  "type": "CallExpression",
-	// 					  "callee": {
-	// 					    "type": "Identifier",
-	// 					    "name": "__tati_jsx_create_element__"
-	// 					  },
-	// 					  "arguments": [
-	// 					    {
-	// 					      "type": "Literal",
-	// 					      "value": JSON.stringify(ast[el]),
-	// 					    }
-	// 					    ]
-						  
-	// 					};
-	// 				}
-	// 			}
-
-	// 			this.#transpile_jsx(ast[el]);
-	// 		}
-	// 	}
-	// }
-
-
-	#set_timeout(func, interval)
-	{
-		return this.#add_timer( { func: func, interval: interval, due: Date.now()+interval, repeat: false } );
-	}
-
-	#set_interval(func, interval)
-	{
-		return this.#add_timer( { func: func, interval: interval, due: Date.now()+interval, repeat: true } );
-	}
-
-	#clear_timeout(idx)
-	{
+#clear_timeout(idx)
+{
 		//todo: this should be changed to a binary search
 
-		for( const ti in this.#timer_queue ) {
-			if(ti.repeat===false &amp;&amp; ti.idx===idx) {
-				this.#timer_queue.splice(ti, 1);
+	for( const ti in this.#timer_queue ) {
+		if(ti.repeat===false &amp;&amp; ti.idx===idx) {
+			this.#timer_queue.splice(ti, 1);
 
-				if(ti===0) {
-					clearTimeout( this.#timer_timeout );
-					this.#timer_timeout = setTimeout( this.#run_timer.bind(this), this.#timer_queue[0].due - Date.now() );					
-				}
-
-				return;
+			if(ti===0) {
+				clearTimeout( this.#timer_timeout );
+				this.#timer_timeout = setTimeout( this.#run_timer.bind(this), this.#timer_queue[0].due - Date.now() );					
 			}
+
+			return;
 		}
 	}
+}
 
-	#clear_interval(idx)
-	{
+#clear_interval(idx)
+{
 		//todo: this should be changed to a binary search
 
-		for( const ti in this.#timer_queue ) {
-			if(ti.repeat===true &amp;&amp; ti.idx===idx) {
+	for( const ti in this.#timer_queue ) {
+		if(ti.repeat===true &amp;&amp; ti.idx===idx) {
 
-				this.#timer_queue.splice(ti, 1);
+			this.#timer_queue.splice(ti, 1);
 
-				if(ti===0) {
-					clearTimeout( this.#timer_timeout );
-					this.#timer_timeout = setTimeout( this.#run_timer.bind(this), this.#timer_queue[0].due - Date.now() );					
-				}
-				return;
+			if(ti===0) {
+				clearTimeout( this.#timer_timeout );
+				this.#timer_timeout = setTimeout( this.#run_timer.bind(this), this.#timer_queue[0].due - Date.now() );					
 			}
+			return;
 		}
 	}
+}
 
-	#add_timer(t)
-	{
-		t.idx = this.#current_timer_idx;
+#add_timer(t)
+{
+	t.idx = this.#current_timer_idx;
 
 		//todo: this should be changed to a binary search
 
-		let ti=0;
-		while( ti &lt; this.#timer_queue.length  &amp;&amp;  this.#timer_queue[ti].due &lt;= t.due ) {
-			ti++;
-		}
-
-		this.#timer_queue.splice(ti, 0, t);
-
-		if(ti===0) {
-			clearTimeout( this.#timer_timeout );
-			this.#timer_timeout = setTimeout( this.#run_timer.bind(this), t.interval );
-		}
-
-		return this.#current_timer_idx++;
+	let ti=0;
+	while( ti &lt; this.#timer_queue.length  &amp;&amp;  this.#timer_queue[ti].due &lt;= t.due ) {
+		ti++;
 	}
 
-	async #run_timer()
-	{
-		const t = this.#timer_queue.splice(0,1)[0];
+	this.#timer_queue.splice(ti, 0, t);
 
-		await t.func();
-
-		if(t.repeat) {
-			t.due = Date.now()+t.interval;
-			this.#add_timer(t);
-		}
-
-		if(this.#timer_queue.length>0) {
-			clearTimeout( this.#timer_timeout );
-			this.#timer_timeout = setTimeout( this.#run_timer.bind(this), this.#timer_queue[0].due - Date.now());
-		}
-		else {
-			if(this.#timer_queue.length===0) {
-
-				if(this.#run_func===null &amp;&amp; this.#debug_func===null) {
-					this.stop_callback();
-				}
-			}
-		}
-	}
-
-	#reset_timers()
-	{
-		clearTimeout(this.#timer_timeout);
-		this.#timer_pause_time = undefined;
-		this.#current_timer_idx = 0;
-		this.#timer_queue = [];
-		this.#timer_timeout = -1;
-	}
-
-	#pause_timers()
-	{
+	if(ti===0) {
 		clearTimeout( this.#timer_timeout );
-		this.#timer_pause_time = Date.now();
+		this.#timer_timeout = setTimeout( this.#run_timer.bind(this), t.interval );
 	}
 
-	#resume_timers()
-	{
+	return this.#current_timer_idx++;
+}
 
+async #run_timer()
+{
+	const t = this.#timer_queue.splice(0,1)[0];
 
-		if(!this.#timer_pause_time) return;
+	await t.func();
 
-		if(this.#timer_queue.length>0) {
-			this.#timer_pause_time -= Date.now();
-			
-			for( const t of this.#timer_queue ) {
-				t.due -= this.#timer_pause_time;
+	if(t.repeat) {
+		t.due = Date.now()+t.interval;
+		this.#add_timer(t);
+	}
+
+	if(this.#timer_queue.length>0) {
+		clearTimeout( this.#timer_timeout );
+		this.#timer_timeout = setTimeout( this.#run_timer.bind(this), this.#timer_queue[0].due - Date.now());
+	}
+	else {
+		if(this.#timer_queue.length===0) {
+
+			if(this.#run_func===null &amp;&amp; this.#debug_func===null) {
+				this.stop_callback();
 			}
+		}
+	}
+}
 
-			this.#timer_timeout = setTimeout( this.#run_timer.bind(this), this.#timer_queue[0].due - Date.now());
+#reset_timers()
+{
+	clearTimeout(this.#timer_timeout);
+	this.#timer_pause_time = undefined;
+	this.#current_timer_idx = 0;
+	this.#timer_queue = [];
+	this.#timer_timeout = -1;
+}
+
+#pause_timers()
+{
+	clearTimeout( this.#timer_timeout );
+	this.#timer_pause_time = Date.now();
+}
+
+#resume_timers()
+{
+
+
+	if(!this.#timer_pause_time) return;
+
+	if(this.#timer_queue.length>0) {
+		this.#timer_pause_time -= Date.now();
+
+		for( const t of this.#timer_queue ) {
+			t.due -= this.#timer_pause_time;
 		}
 
-		this.#timer_pause_time = undefined;
+		this.#timer_timeout = setTimeout( this.#run_timer.bind(this), this.#timer_queue[0].due - Date.now());
 	}
 
-	#template_generate_watch_args(ws)
-	{
-		if(ws.length==0) return [];
+	this.#timer_pause_time = undefined;
+}
 
-		var wss=this.#template_generate_watch_args(ws[0]);
+#template_generate_watch_args(ws)
+{
+	if(ws.length==0) return [];
 
-		for(let i=1; i&lt;ws.length; i++) {
-			wss.push({
-				"type": "Literal",
-				"value": ws[i],
-				"raw": "\""+ws[i]+"\""
-			});
+	var wss=this.#template_generate_watch_args(ws[0]);
 
-			wss.push({
-				"type": "CallExpression",
-				"callee": {
-					"type": "ArrowFunctionExpression",
-					"id": null,
-					"params": [],
-					"body": {
-						"type": "BlockStatement",
-						"body": [
-						{
-							"type": "TryStatement",
-							"block": {
+	for(let i=1; i&lt;ws.length; i++) {
+		wss.push({
+			"type": "Literal",
+			"value": ws[i],
+			"raw": "\""+ws[i]+"\""
+		});
+
+		wss.push({
+			"type": "CallExpression",
+			"callee": {
+				"type": "ArrowFunctionExpression",
+				"id": null,
+				"params": [],
+				"body": {
+					"type": "BlockStatement",
+					"body": [
+					{
+						"type": "TryStatement",
+						"block": {
+							"type": "BlockStatement",
+							"body": [
+							{
+								"type": "ReturnStatement",
+								"argument": {
+									"type": "ConditionalExpression",
+									"test": {
+										"type": "BinaryExpression",
+										"operator": "===",
+										"left": {
+											"type": "UnaryExpression",
+											"operator": "typeof",
+											"argument": {
+												"type": "Identifier",
+												"name": ws[i]
+											},
+											"prefix": true
+										},
+										"right": {
+											"type": "Literal",
+											"value": "undefined",
+											"raw": "'undefined'"
+										}
+									},
+									"consequent": {
+										"type": "Identifier",
+										"name": "undefined"
+									},
+									"alternate": {
+										"type": "Identifier",
+										"name": ws[i]
+									}
+								}
+							}
+							]
+						},
+						"handler": {
+							"type": "CatchClause",
+							"param": {
+								"type": "Identifier",
+								"name": "e"
+							},
+							"body": {
 								"type": "BlockStatement",
 								"body": [
 								{
 									"type": "ReturnStatement",
 									"argument": {
-										"type": "ConditionalExpression",
-										"test": {
-											"type": "BinaryExpression",
-											"operator": "===",
-											"left": {
-												"type": "UnaryExpression",
-												"operator": "typeof",
-												"argument": {
-													"type": "Identifier",
-													"name": ws[i]
-												},
-												"prefix": true
-											},
-											"right": {
-												"type": "Literal",
-												"value": "undefined",
-												"raw": "'undefined'"
-											}
-										},
-										"consequent": {
-											"type": "Identifier",
-											"name": "undefined"
-										},
-										"alternate": {
-											"type": "Identifier",
-											"name": ws[i]
-										}
+										"type": "Identifier",
+										"name": "undefined"
 									}
 								}
 								]
-							},
-							"handler": {
-								"type": "CatchClause",
-								"param": {
-									"type": "Identifier",
-									"name": "e"
-								},
-								"body": {
-									"type": "BlockStatement",
-									"body": [
-									{
-										"type": "ReturnStatement",
-										"argument": {
-											"type": "Identifier",
-											"name": "undefined"
-										}
-									}
-									]
-								}
-							},
-							"finalizer": null
-						}
-						]
-					},
-					"generator": false,
-					"expression": false,
-					"async": false
+							}
+						},
+						"finalizer": null
+					}
+					]
 				},
-				"arguments": []
-			});
-		}
-
-		return wss;
+				"generator": false,
+				"expression": false,
+				"async": false
+			},
+			"arguments": []
+		});
 	}
 
+	return wss;
+}
 
-	#template_block(el,ws)
+
+#template_block(el,ws)
+{
+
+	let res = {
+		"type": "ExpressionStatement",
+		"expression": {
+			"type": "AwaitExpression",
+			"argument": {
+				"type": "CallExpression",
+				"callee": {
+					"type": "Identifier",
+					"name": "__tati_template_no_watch_args__"
+				},
+				"arguments": [
+				{
+					"type": "Literal",
+					"value": el.start,
+					"raw": "" + el.start
+				}
+				],
+				"optional": false
+			}
+		}
+	};
+
+	if(ws!=null) {
+		let wss = this.#template_generate_watch_args(ws);
+		res.expression.argument.callee.name="__tati_template_watch_args__";
+		res.expression.argument.arguments.push(...wss);
+	}
+
+	return res;
+};
+
+
+#template_block_sync(el,ws)
+{
+
+	let res = {
+		"type": "CallExpression",
+		"callee": {
+			"type": "Identifier",
+			"name": "__tati_template_no_watch_args__"
+		},
+		"arguments": [
+		{
+			"type": "Literal",
+			"value": el.start,
+			"raw": "" + el.start
+		}
+		],
+		"optional": false
+	};
+
+	if(ws!=null) {
+		let wss = this.#template_generate_watch_args(ws);
+		res.expression.argument.callee.name="__tati_template_watch_args__";
+		res.expression.argument.arguments.push(...wss);
+	}
+
+	return res;
+};
+
+
+#template_inline(el,ws)
+{
+
+
+	let res =
+
 	{
-
-		let res = {
-			"type": "ExpressionStatement",
-			"expression": {
+		"type": "BinaryExpression",
+		"operator": "/",
+		"left":
+		{
+			"type": "SequenceExpression",
+			"expressions":[
+			{
 				"type": "AwaitExpression",
 				"argument": {
 					"type": "CallExpression",
@@ -1295,98 +1371,26 @@ class Tati
 						"type": "Literal",
 						"value": el.start,
 						"raw": "" + el.start
-					}
+					},
 					],
 					"optional": false
 				}
+			},
+			el
+			]},
+
+			"right": {
+				"type": "Identifier",
+				"name": "__tati_template_paranthesis__"
 			}
 		};
-
-		if(ws!=null) {
-			let wss = this.#template_generate_watch_args(ws);
-			res.expression.argument.callee.name="__tati_template_watch_args__";
-			res.expression.argument.arguments.push(...wss);
-		}
-
-		return res;
-	};
-
-
-	#template_block_sync(el,ws)
-	{
-
-		let res = {
-					"type": "CallExpression",
-					"callee": {
-						"type": "Identifier",
-						"name": "__tati_template_no_watch_args__"
-					},
-					"arguments": [
-					{
-						"type": "Literal",
-						"value": el.start,
-						"raw": "" + el.start
-					}
-					],
-					"optional": false
-		};
-
-		if(ws!=null) {
-			let wss = this.#template_generate_watch_args(ws);
-			res.expression.argument.callee.name="__tati_template_watch_args__";
-			res.expression.argument.arguments.push(...wss);
-		}
-
-		return res;
-	};
-
-
-	#template_inline(el,ws)
-	{
-
-
-		let res =
-
-				{
-					"type": "BinaryExpression",
-					"operator": "/",
-					"left":
-								{
-									"type": "SequenceExpression",
-									"expressions":[
-										{
-												"type": "AwaitExpression",
-												"argument": {
-													"type": "CallExpression",
-													"callee": {
-														"type": "Identifier",
-														"name": "__tati_template_no_watch_args__"
-													},
-													"arguments": [
-													{
-														"type": "Literal",
-														"value": el.start,
-														"raw": "" + el.start
-													},
-												],
-												"optional": false
-											}
-									},
-									el
-								]},
-
-								"right": {
-												"type": "Identifier",
-												"name": "__tati_template_paranthesis__"
-											}
-				};
 
 		if(ws!=null) {
 			let wss = this.#template_generate_watch_args(ws);
 			res.left.expressions[0].argument.callee.name="__tati_template_watch_args__";
 			res.left.expressions[0].argument.arguments.push(...wss);
 		}
-``
+		``
 		return res;
 
 	};
@@ -1427,9 +1431,9 @@ class Tati
 					this.#pause_timers();
 					self.#is_paused = true;
 					return new Promise(
-							function(res,rej) {
-								self.#debug_resolve = res;
-							}
+						function(res,rej) {
+							self.#debug_resolve = res;
+						}
 						);
 				}
 			}
@@ -1451,9 +1455,9 @@ class Tati
 				this.#pause_timers();
 				self.#is_paused = true;
 				return new Promise(
-						function(res,rej) {
-							self.#debug_resolve = res;
-						}
+					function(res,rej) {
+						self.#debug_resolve = res;
+					}
 					);
 			}
 		}
@@ -1486,9 +1490,9 @@ class Tati
 					this.#pause_timers();
 					self.#is_paused = true;
 					return new Promise(
-							function(res,rej) {
-								self.#debug_resolve = res;
-							}
+						function(res,rej) {
+							self.#debug_resolve = res;
+						}
 						);
 				}
 			}
@@ -1499,9 +1503,9 @@ class Tati
 				this.#pause_timers();
 				self.#is_paused = true;
 				return new Promise(
-						function(res,rej) {
-							self.#debug_resolve = res;
-						}
+					function(res,rej) {
+						self.#debug_resolve = res;
+					}
 					);
 			}
 		}
@@ -1509,53 +1513,6 @@ class Tati
 	}
 
 
-	#jsx_create_element( jsx )
-	{
-		jsx = JSON.parse(jsx);
-
-		console.log(jsx);
-
-		function traverse(ast) 
-		{
-			if(typeof(ast)==="object" ) {
-
-				for(let e in ast) {
-					traverse(ast[e]);
-				}
-
-				if(ast!=null &amp;&amp; ast.type!=undefined) {		
-
-					if(ast.type==="JSXElement") {
-
-						let attrs = {};
-						for(let a of ast.openingElement.attributes) {
-							attrs[ a.name.name ] = a.value;
-						}
-
-						ast.attributes = attrs;
-
-						for(let c in ast.children) {
-							ch = ast.children[c];
-						}
-
-					}
-					else if(ast.type==="JSXAttribute" &amp;&amp; ast.value) {
-						if(ast.value.type==="JSXExpressionContainer") {
-							ast.value = astring.generate(ast.value.expression);
-						}
-						else if(ast.value.type==="Literal") {
-							ast.value = `"${ast.value.value.replace(/["]/g, "\\\"")}"`;
-						}
-					}
-				}
-
-			}
-		}
-
-		traverse(jsx);
-
-		console.log(jsx);
-	}
 
 	static error_proxy(err)
 	{

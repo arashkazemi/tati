@@ -1,6 +1,6 @@
 {
   "name": "tati",
-  "version": "3.0.0",
+  "version": "3.2.0",
   "description": "A Javascript Debugger without Using the Built-in Runtime Inspector",
   "repository": "github:arashkazemi/tati",
   "homepage": "https://arashkazemi.github.io/tati/",
@@ -18,7 +18,7 @@
     "watch",
     "breakpoint",
     "run",
-    "workers"
+    "jsx"
   ],
   "author": {
     "name": "Arash Kazemi",
@@ -34,12 +34,12 @@
   "license": "BSD-2-Clause",
   "dependencies": {
     "acorn": "^8.12.1",
-    "acorn-jsx": "^5.3.2",
+    "acorn-walk": "^8.3.4",
     "astring": "^1.9.0",
-    "async.prototypes": "^1.0.2",
-    "jsx-transform-modern": "^2.0.3"
+    "async.prototypes": "^1.0.2"
   },
   "devDependencies": {
+    "buffer": "^6.0.3",
     "http-server": "^14.1.1",
     "jsdoc": "^3.6.11",
     "webpack": "^5.74.0",
